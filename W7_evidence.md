@@ -294,7 +294,6 @@ Từ CloudFormation template, các IAM roles quan trọng:
 | `AmazonBedrockExecutionRoleForAgents_G7WDZSSAM3M` | Flashcard Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
 | `VPCFlowLogs-Cloudwatch-1777278638503` | VPC Flow Logs delivery | logs:CreateLogStream, PutLogEvents |
 
-**Điểm quan trọng:** Không có wildcard `*` trong policy documents. Mỗi action được giới hạn đến resource ARN cụ thể. Bedrock Agents chỉ có quyền invoke model cụ thể (nova-lite-v1:0 hoặc titan-embed-text-v2:0), không invoke bất kỳ model nào.
 
 #### CloudTrail — Audit Logging
 
