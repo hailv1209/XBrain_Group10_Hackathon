@@ -762,5 +762,7 @@ Dựa trên VPC Flow Logs đã thu thập:
 > **📸 Screenshot 10:** Chèn ảnh VPC Flow Logs analysis (Log Insights query filter REJECT) tại đây.
 >
 > File: `docs/evidence/vpc_flow_logs_analysis.png`      
+<img width="1914" height="1071" alt="image" src="https://github.com/user-attachments/assets/25c22df5-1b6b-42d2-aa6d-39538dca7f63" />
+<img width="1914" height="1071" alt="image" src="https://github.com/user-attachments/assets/2721b9cc-4b67-4be1-abea-963a82a39149" />
 
 ---
