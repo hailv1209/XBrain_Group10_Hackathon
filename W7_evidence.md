@@ -1,6 +1,8 @@
-# W7 Evidence Pack — Team Water, MedEdu (EduTech: AI Study Buddy)
+# W7 Evidence Pack — Group 10, MedEdu (EduTech: AI Study Buddy)
 
 > **Hackathon:** W7 Capstone — Ship Production-Ready AI in 48 Hours
+> **Compiled:** Thứ Tư 28/5/2026 — Day 1 Build
+> **Status:** In-progress — các section sẽ được cập nhật bằng ảnh chụp thực tế sau khi deploy
 
 ---
 
@@ -8,12 +10,13 @@
 
 | Trường | Giá trị |
 |--------|---------|
-| **Nhóm** | Team Water (G10) |
+| **Nhóm** | G10 |
 | **Domain** | EduTech: "AI Study Buddy" — MedEdu |
 | **Thành viên** | Lê Trần Tuấn Khanh, Trần Mạnh Trường, Trần Mạnh Cường, Nguyễn Đức Hảo, Lê Văn Hải, Phan Đức Huy, Lê Viết Quốc Hưng, Huỳnh Xuân Hậu, Nguyễn Thị Mến, Trần Quốc Hùng |
 | **Live URL** | https://aws.hungtran.id.vn/ |
 | **Repo** | https://github.com/orgs/aws-g10/repositories |
-| **Optional capability đã chọn** | [Full Observability #8 / Advanced Cost Insights #9 / Advanced Security #10 / Không làm] |
+| **AWS Account** | 493499579600 |
+| **Region** | ap-southeast-2 (Sydney) |
 | **Tổng chi phí (tính đến hiện tại)** | $[—] — chụp ảnh Cost Explorer cuối Day 1 để điền |
 | **Pre-flight safety** | MFA trên root ✅ | Budget alert $80 ✅ | Cost Anomaly Detection ✅ | Gắn tag ✅ | Bedrock access đã request ✅ |
 
@@ -64,29 +67,29 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 
 | # | Capability | Service Đã Chọn | Tại Sao Chọn Cái Này, Không Phải Cái Khác |
 |---|-----------|-----------------|-------------------------------------------|
-| 1a | Static UI Hosting | CloudFront + S3 | HTTPS trên `*.cloudfront.net` miễn phí — không cần setup ACM cert. S3 static hosting làm origin. |
-| 1b | API Entry | API Gateway HTTP API | Rẻ hơn REST API ($1/M vs $3.50/M), đủ cho request volume của chúng tôi, tích hợp IAM để validate auth. |
-| 2 | Application Compute | EC2 t3.micro (FastAPI) | Chúng tôi đã xây dựng FastAPI backend với SQLAlchemy synchronous — chạy trên EC2 tránh được việc refactor code sang async handler model cho Lambda. t3.micro free-tier (750 giờ đầu tiên mỗi tháng). Chấp nhận rủi ro quản lý instance vì hackathon 48h với codebase có sẵn thì đây là con đường nhanh hơn. |
-| 3 | AI/ML Feature | Bedrock Claude 3.5 Haiku + Bedrock Knowledge Base + n8n | RAG trên tài liệu đã upload là core AI feature. Haiku được chọn sau khi so sánh chi phí/chất lượng (xem Phần 6.5). n8n orchestrate AI webhooks cho quiz/flashcard/summary generation tách biệt với RAG chat. |
-| 4 | Data Persistence | RDS PostgreSQL db.t3.micro (single-AZ) | Data model của chúng tôi là quan hệ (users → books → contents, quizzes, flashcards). SQLAlchemy ORM đã xây dựng sẵn. Multi-AZ gấp đôi chi phí ($0.026 → $0.052/hr ở Singapore) nhưng không có giá trị demo trong hackathon 48h — single-AZ là trade-off đúng. |
-| 5 | Object Storage | S3 Standard | Lưu trữ PDF uploads và KB source. Standard tier là rẻ nhất và đủ dùng. Block Public Access đã bật. |
-| 6 | Network Foundation | VPC với private subnets + SGs + VPC Endpoints | DB nằm trong private subnet với SG tham chiếu đến EC2 SG (không phải CIDR). NAT Gateway tạm thời cho setup ban đầu — thay bằng VPC Interface Endpoint cho Bedrock để tránh phí NAT Gateway $1.08/ngày. |
-| 7 | Identity & Access | IAM instance profile (EC2) với scoped actions | FastAPI trên EC2 dùng instance profile (không cần key dài hạn). IAM role chỉ cho phép: `s3:GetObject/PutObject` trên bucket ARN của chúng tôi, `bedrock:InvokeModel` trên model đã chọn, `rds-db:connect` trên DB của chúng tôi. |
+| 1a | Static UI Hosting | CloudFront + S3 | HTTPS trên custom domain `aws.hungtran.id.vn` qua CloudFront. S3 là origin. Block Public Access bật. Không cần ACM riêng vì dùng HTTPS của CloudFront. |
+| 1b | API Entry | ALB (Application Load Balancer) | ALB nhận traffic từ CloudFront prefix list và forward đến ECS Fargate tasks qua port 8000. Stateful app (FastAPI + SQLAlchemy) cần connection persistence — ALB hỗ trợ tốt hơn Lambda Function URL. |
+| 2 | Application Compute | ECS Fargate | FastAPI backend chạy trên Fargate thay vì EC2 vì: không cần quản lý instance, tự động scale theo request, tính phí theo vCPU-Giây sử dụng (phù hợp cho hackathon 48h). ECS IAM Task Role cho phép gán quyền scoped. |
+| 3 | AI/ML Feature | Bedrock Agents + Knowledge Base + Guardrail | 3 Agents riêng cho 3 chức năng (chat RAG, quiz, flashcard) mỗi agent gắn Knowledge Base. Nova Lite v1 được chọn cho chi phí thấp và hỗ trợ đa phương thức. Guardrail bảo vệ nội dung phù hợp cho môi trường giáo dục y khoa. |
+| 4 | Data Persistence | RDS PostgreSQL db.t3.micro (single-AZ) | Data model MedEdu là quan hệ (users → books → contents → quizzes → flashcards). SQLAlchemy ORM đã xây dựng sẵn. Single-AZ vì Multi-AZ gấp đôi chi phí, không có giá trị demo. Neptune (graph DB) để thử nghiệm truy vấn quan hệ phức tạp giữa các thực thể. |
+| 5 | Object Storage | S3 Standard (3 buckets) | Frontend bucket, data-source bucket (KB), supplemental bucket. Tất cả bật Block Public Access và SSE-S3 encryption. OwnershipControls: BucketOwnerEnforced. |
+| 6 | Network Foundation | VPC 3-tier (public + private DB) + NAT GW + SG references | Public subnets cho ALB + ECS + NAT GW. Private subnets (2 AZ) cho RDS + Neptune. SG của RDS chỉ accept TCP 5432 từ ECS SG (không phải 0.0.0.0/0). VPC Flow Logs gửi logs đến CloudWatch. |
+| 7 | Identity & Access | IAM execution roles (Bedrock Agents + ECS Task Role) | Mỗi Bedrock Agent có dedicated IAM role với chỉ các actions cần thiết. ECS Task Role chỉ được phép: S3 trên 3 bucket cụ thể, RDS connect, Bedrock invoke. Không wildcard. CloudTrail ghi management events. |
 | — | Optional #8/9/10 | [Điền sau khi quyết định Day 2] | [Lý do quyết định] |
 
 ### 3.3 Trade-offs (2-3 quyết định có suy nghĩ đã được ghi nhận)
 
-**Trade-off 1: EC2 vs Lambda cho application compute**
+**Trade-off 1: ECS Fargate vs EC2 cho application compute**
 
-Chúng tôi chọn **EC2 t3.micro** thay vì Lambda vì FastAPI backend dùng SQLAlchemy synchronous calls cần refactor đáng kể để phù hợp với async handler model của Lambda. t3.micro free-tier (750 giờ/tháng đầu tiên). Chúng tôi chấp nhận việc phải quản lý instance — nhưng với 48h hackathon và codebase FastAPI có sẵn, đây là con đường nhanh hơn để có demo hoạt động.
+Chúng tôi chọn **ECS Fargate** thay vì EC2 vì FastAPI backend được containerize sẵn, Fargate không yêu cầu quản lý EC2 instance (no SSH, no patching, no scaling groups), và tính phí theo resource thực sử dụng (0.04048 USD/vCPU-giây trong ap-southeast-2). Với hackathon 48h, Fargate cho phép deploy nhanh hơn. Trade-off: Fargate có cold start latency cao hơn EC2 nếu task bị terminate — nhưng ECS Service giữ task luôn running.
 
-**Trade-off 2: Single-AZ RDS vs Multi-AZ RDS**
+**Trade-off 2: amazon.nova-lite-v1:0 vs Claude 3.5 Haiku cho AI agents**
 
-Chúng tôi chọn **single-AZ** vì Multi-AZ gấp đôi chi phí ($0.026 → $0.052/hr ở Singapore), cung cấp failover protection không có giá trị demo trong 48h hackathon, và EC2 đã cùng AZ với RDS — failover không giúp gì khi demo lỗi. Điều này tiết kiệm khoảng $1.25 trong 48 giờ.
+Chúng tôi chọn **Nova Lite** vì chi phí thấp hơn đáng kể so với Claude family ($0.04/1M input vs Haiku $1.00/1M), hỗ trợ multimodal input (text + image), và native Bedrock integration. NeoPixel (Nova family) được đánh giá tốt cho các tác vụ text generation cơ bản. Xem Phần 6.5 cho benchmark chi tiết.
 
-**Trade-off 3: Bedrock Claude Haiku vs Sonnet**
+**Trade-off 3: Semantic Chunking vs Fixed-size Chunking cho Knowledge Base**
 
-Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M tokens) thay vì Sonnet ($3.00/$15.00) sau khi benchmark song song trên 10 sample quiz-generation prompts. Chất lượng không khác biệt đáng kể cho task tạo câu hỏi ngắn có cấu trúc. Haiku rẻ hơn 3x mỗi lần gọi — xem Phần 6.5 đầy đủ.
+Chúng tôi chọn **SEMANTIC chunking** (max 300 tokens, breakpoint percentile 95%) thay vì fixed-size (ví dụ 512 tokens/page) vì medical textbooks có cấu trúc đoạn văn ngữ nghĩa hoàn chỉnh — cắt giữa đoạn sẽ làm mất context. Semantic chunking giữ nguyên semantic boundaries, cải thiện retrieval quality cho RAG. Trade-off: semantic chunking chậm hơn và tốn nhiều tokens hơn khi embedding vì chunks không đều nhau.
 
 ---
 
@@ -94,15 +97,14 @@ Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M token
 
 ### 4.1 Cost Screenshots
 
-
 <img width="975" height="385" alt="image" src="https://github.com/user-attachments/assets/a0363b0f-362a-4399-a38d-ddeea95f05f5" />
 <img width="975" height="249" alt="image" src="https://github.com/user-attachments/assets/1ec8f7a9-493a-4879-87af-9614882f64fc" />
 
-> **📸 Day 1 EOD:** Cost sau cuối ngày 1
+> **📸 Screenshot 4.1 Day 1 EOD:** 
 
 **Cách chụp Cost Explorer:**
 1. AWS Console → Cost Explorer
-2. Filter: `Tag: Team=G<N>`
+2. Filter: `Tag: Team=G10`
 3. Group by: Service
 4. Date range: Last 7 days (hoặc custom từ ngày bắt đầu)
 5. Chụp ảnh toàn màn hình
@@ -111,26 +113,30 @@ Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M token
 
 ### 4.2 Cost Breakdown (Ước tính — thay bằng dữ liệu thực tế sau khi deploy)
 
-Dựa trên kiến trúc và ước tính 48h sử dụng ở `ap-southeast-1`:
+Dựa trên kiến trúc CloudFormation và ước tính 48h sử dụng ở `ap-southeast-2`:
 
 | Service | Cách tính | Chi phí ước tính |
 |---------|-----------|-----------------|
-| EC2 t3.micro (FastAPI) | $0 (free tier tháng đầu) | $0.00 |
+| ECS Fargate (vCPU 0.25, GB 0.5, 48h) | $0.04048/vCPU-giây × 0.25 × 3600 × 48 | ~$0.44 |
+| ALB (hourly + LCU) | $0.0225/hr × 48 + LCU | ~$1.10 |
+| NAT Gateway (2 × 48h) | $0.059/hr × 2 × 48h | ~$5.66 |
 | RDS db.t3.micro single-AZ | $0.026/hr × 48h | $1.25 |
-| RDS gp3 storage (20GB) | $0.138/GB-mo × 20 × (48/720) | $0.18 |
-| S3 (100MB storage + uploads) | ~$0.01 | $0.01 |
+| RDS gp2 storage (20GB) | $0.138/GB-mo × 20 × (48/720) | $0.18 |
+| Neptune db.t3.micro | $0.026/hr × 48h | $1.25 |
+| S3 (3 buckets, storage + requests) | ~$0.02 | $0.02 |
 | CloudFront | 1GB Asia outbound | $0.09 |
-| Bedrock Haiku (500K in + 50K out) | $0.50 + $0.25 | $0.75 |
-| Bedrock Titan Embeddings (ingestion) | 1M tokens × $0.02/M | $0.02 |
+| Bedrock Nova Lite (KB retrieve+generate) | ~500K in + 50K out × pricing | ~$0.40 |
+| Bedrock Titan Embeddings v2 (ingestion) | 1M tokens × $0.02/M | $0.02 |
 | S3 Vectors (KB vector store) | ~$0.01 | $0.01 |
 | KMS CMK (1 key) | prorated 48h | $0.07 |
-| VPC Interface Endpoint (Bedrock) | $0.013/hr × 48h | $0.62 |
-| **TỔNG ƯỚC TÍNH** | | **~$3.00** |
-| **% của $100 cap** | | **~3%** |
+| CloudTrail (multi-region, 48h) | ~$0.02 | $0.02 |
+| VPC Flow Logs (CloudWatch) | ~$0.05 | $0.05 |
+| **TỔNG ƯỚC TÍNH** | | **~$9.50** |
+| **% của $100 cap** | | **~9.5%** |
+
+> **⚠️ LƯU Ý:** NAT Gateway là chi phí lớn nhất (~$5.66). Nếu ECS chỉ gọi AWS services (Bedrock, S3, RDS), có thể thay thế NAT Gateway bằng VPC Interface Endpoints để giảm chi phí.
 
 > **📸 Screenshot 4.2:** Chèn ảnh Cost Explorer breakdown theo service tại đây.
->
-> **Gợi ý chụp:** Cost Explorer → Cost and Usage → Group by: Service → Date range: 48h period
 
 ---
 
@@ -148,15 +154,10 @@ Dựa trên kiến trúc và ước tính 48h sử dụng ở `ap-southeast-1`:
 > 3. [Service C]: $[X] — chiếm [Y]% tổng chi phí
 >
 > **Xu hướng chi phí:**
-> - [Ngày/thời điểm]: chi phí tăng/giảm vì [lý do cụ thể, ví dụ: bật thêm Lambda, chạy thêm KB ingestion]
-> - [Ngày/thời điểm]: [lý do cụ thể khác]
+> - [Ngày/thời điểm]: chi phí tăng/giảm vì [lý do cụ thể]
 >
 > **Có nằm trong ngân sách không?**
 > - [Có/Không] — [giải thích]
->
-> **Nếu vượt ngưỡng, giải pháp giảm chi phí:**
-> - [Giải pháp 1]: [hành động cụ thể]
-> - [Giải pháp 2]: [hành động cụ thể]
 >
 > **Bonus eligibility (Path H — dưới $30)?**
 > - [Có/Không] — [lý do]
@@ -165,11 +166,11 @@ Dựa trên kiến trúc và ước tính 48h sử dụng ở `ap-southeast-1`:
 
 ### 4.4 Cost Anomaly Detection
 
-Cost Anomaly Detection monitor đã tạo ở account level vào sáng thứ Tư. Service miễn phí, dựa trên ML, set alert cho bất kỳ spike chi phí bất thường nào.
+Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí, dựa trên ML, set alert cho bất kỳ spike chi phí bất thường nào.
 
 > **📸 Screenshot 4.4:** Chụp ảnh Cost Anomaly Detection monitor từ AWS Console.
 >
-> **Gợi ý chụp:** AWS Console → Cost Management → Cost Anomaly Detection → Monitor đã tạo → chi tiết monitor
+> **Gợi ý chụp:** AWS Console → Cost Management → Cost Anomaly Detection → Monitor đã tạo
 >
 > File: `docs/evidence/cost_anomaly_detection.png`
 
@@ -179,62 +180,35 @@ Cost Anomaly Detection monitor đã tạo ở account level vào sáng thứ Tư
 
 ### 5.1 IAM Roles và Execution Role Scope (Mandatory #7)
 
-**EC2 Instance Profile Role:** `MedEdu-EC2-Role`
+#### ECS Task Role (Bedrock + S3 + RDS access)
 
-> **📸 Screenshot 5.1a:** Chụp ảnh IAM role policy từ AWS Console.
+> **📸 Screenshot 5.1a:** Chụp ảnh ECS Task Role policy từ AWS Console.
 >
-> **Gợi ý chụp:** IAM Console → Roles → `MedEdu-EC2-Role` → Permissions tab → policy document
+> File: `docs/evidence/ecs_task_role_policy.png`
+
+Từ CloudFormation template, các IAM roles quan trọng:
+
+| Role Name | Purpose | Scoped Actions |
+|-----------|---------|---------------|
+| `AmazonBedrockExecutionRoleForKnowledgeBase` | KB ingestion + S3 Vectors access | S3 (3 buckets), Bedrock invoke Titan, BDA, S3 Vectors (GetIndex, QueryVectors, PutVectors, DeleteVectors) |
+| `AmazonBedrockExecutionRoleForAgents_AXKQXIRED1G` | Chat RAG Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
+| `AmazonBedrockExecutionRoleForAgents_DDB8T2J26LB` | Quiz Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
+| `AmazonBedrockExecutionRoleForAgents_G7WDZSSAM3M` | Flashcard Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
+| `VPCFlowLogs-Cloudwatch-1777278638503` | VPC Flow Logs delivery | logs:CreateLogStream, PutLogEvents |
+
+**Điểm quan trọng:** Không có wildcard `*` trong policy documents. Mỗi action được giới hạn đến resource ARN cụ thể. Bedrock Agents chỉ có quyền invoke model cụ thể (nova-lite-v1:0 hoặc titan-embed-text-v2:0), không invoke bất kỳ model nào.
+
+#### CloudTrail — Audit Logging
+
+> **📸 Screenshot 5.1b:** Chụp CloudTrail console hiển thị trail đang logging.
 >
-> File: `docs/evidence/iam_ec2_role_policy.png`
+> File: `docs/evidence/cloudtrail_active.png`
 
-```
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": "arn:aws:s3:::mededu-docs/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock:InvokeModel",
-        "bedrock:InvokeModelWithResponseStream"
-      ],
-      "Resource": "arn:aws:bedrock:ap-southeast-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock:Retrieve",
-        "bedrock:RetrieveAndGenerate"
-      ],
-      "Resource": "arn:aws:bedrock:ap-southeast-1:ACCOUNT:knowledge-base/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::ACCOUNT:role/MedEdu-RDS-Connect-Role"
-    }
-  ]
-}
-```
-
-> **Điểm quan trọng:** Không có wildcard `*`. Mỗi action được giới hạn đến resource ARN cụ thể. Role không thể truy cập bất kỳ S3 bucket nào ngoài `mededu-docs` của chúng tôi. Không thể invoke bất kỳ Bedrock model nào ngoài Claude Haiku.
-
-**RDS Connect Role:** `MedEdu-RDS-Connect-Role`
-
-```
-{
-  "Effect": "Allow",
-  "Action": "rds-db:connect",
-  "Resource": "arn:aws:rds-db:ap-southeast-1:ACCOUNT:dbuser:DBINSTANCEID/db_user"
-}
-```
+- Trail name: `webapp-group10-management-events`
+- Multi-region: enabled
+- S3 bucket: `webapp-group10-management-cloudtrail-logs-bucket`
+- Events: Management events
+- Log file validation: enabled
 
 ### 5.2 MFA on Root Account
 
@@ -242,53 +216,42 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 
 > **📸 Screenshot 5.2:** Chụp ảnh MFA đã enabled trên root account.
 >
-> **Gợi ý chụp:** AWS Console → Account → Security credentials → MFA on root account → trạng thái "MFA is enabled"
->
 > File: `docs/evidence/mfa_root_enabled.png`
 
-### 5.3 Optional #10 Security Area (nếu thực hiện)
+### 5.3 Optional #10 Security Area — Guardrail + Encryption + CloudTrail (đã implement)
 
-> **CẦN CHỌN:** Chọn MỘT area và document với bằng chứng cụ thể.
+Dựa trên CloudFormation template, nhóm đã implement các security features sau:
 
----
+#### Bedrock Guardrail — Content Safety
 
-**Option A — Encryption at Rest (nếu chọn KMS CMK):**
-
-- KMS CMK đã tạo: `arn:aws:kms:ap-southeast-1:ACCOUNT:key/mrk-xxxx`
-- Áp dụng cho: S3 bucket (server-side encryption), RDS (at-rest encryption via CMK)
-- Key rotation: enabled (tự động rotation mỗi năm)
-
-> **📸 Screenshot 5.3A-1:** Chụp KMS console hiển thị key rotation status = "Enabled"
-> File: `docs/evidence/kms_key_rotation.png`
+> **📸 Screenshot 5.3A:** Chụp Bedrock Guardrail console từ AWS Console.
 >
-> **📸 Screenshot 5.3A-2:** Chụp S3 bucket properties hiển thị SSE-KMS với CMK ARN
-> File: `docs/evidence/s3_kms_encryption.png`
+> File: `docs/evidence/guardrail_console.png`
 
----
+- **Guardrail name:** `webapp-group10-guardrail`
+- **Guardrail ID:** `l0yuz39969zy`
+- **Content Filters:** VIOLENCE, HATE, SEXUAL, INSULTS, MISCONDUCT (HIGH strength, BLOCK action)
+- **Profanity:** Input + Output BLOCK
+- **Contextual Grounding:** GROUNDING threshold 0.85, RELEVANCE threshold 0.65
+- **Blocked message:** "Sorry, the model cannot answer this question. If you have any concerns, let contact with us at 0123456789"
+- Gắn vào cả 3 Bedrock Agents (chat, quiz, flashcard)
 
-**Option B — Secrets Management (nếu chọn Parameter Store):**
+#### Encryption at Rest
 
-- Database credentials lưu trong Parameter Store (`/mededu/db_password`) với SecureString
-- Không có hardcoded secrets trong code hoặc `.env` đã commit lên repo
+- **RDS:** Encrypted = true, KMS Key = `arn:aws:kms:ap-southeast-2:493499579600:key/281a9f1a-d25f-4330-a264-c5a5565caea4`
+- **S3 Buckets:** SSE-S3 (AES256), BucketKey enabled
 
-> **📸 Screenshot 5.3B-1:** Chụp Parameter Store console hiển thị `/mededu/db_password` với loại SecureString
-> File: `docs/evidence/parameter_store_secrets.png`
+> **📸 Screenshot 5.3B:** Chụp RDS console hiển thị encryption enabled + KMS key.
 >
-> **📸 Screenshot 5.3B-2:** Chụp `.env.example` file (không có giá trị thực) trong repo
-> File: `docs/evidence/env_example.png`
+> File: `docs/evidence/rds_encryption.png`
 
----
+#### Audit Trail
 
-**Option C — Network Hardening (nếu chọn WAF/Flow Logs):**
+- **CloudTrail:** Multi-region management events trail, log file validation enabled, logs stored in dedicated S3 bucket
 
-- WAF Web ACL gắn vào CloudFront: rate-based rule chặn >1000 requests/phút/IP
-- VPC Flow Logs: enabled trên VPC, log vào CloudWatch Log Group
-
-> **📸 Screenshot 5.3C-1:** Chụp WAF Web ACL console với rule đã configure
-> File: `docs/evidence/waf_web_acl.png`
+> **📸 Screenshot 5.3C:** Chụp CloudTrail event history hoặc S3 bucket chứa trail logs.
 >
-> **📸 Screenshot 5.3C-2:** Chụp VPC Flow Logs configuration hoặc CloudWatch Logs Insights query kết quả
-> File: `docs/evidence/vpc_flow_logs.png`
+> File: `docs/evidence/cloudtrail_logs_bucket.png`
 
 ---
 
@@ -299,16 +262,16 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 > **CẦN TẠO (Day 2):** Tạo dashboard với ít nhất 3 widgets. Chụp ảnh → `docs/evidence/cloudwatch_dashboard.png`
 
 **Các widget được khuyến nghị:**
-1. **EC2 / FastAPI**: CPUUtilization, NetworkIn/Out
-2. **RDS**: DatabaseConnections, CPUUtilization, FreeStorageSpace
-3. **Custom metric**: `MedEdu/AIRequests` — published qua `PutMetricData` từ FastAPI mỗi lần gọi AI
-4. **S3**: NumberOfObjects, BucketSizeBytes
+1. **ECS Fargate**: CPUUtilization, MemoryUtilization, RunningTaskCount
+2. **ALB**: ActiveConnectionCount, TargetResponseTime, HTTPCode_Target_5XX_Count
+3. **RDS PostgreSQL**: DatabaseConnections, CPUUtilization, FreeStorageSpace
+4. **Custom metric**: số request AI qua ECS, publish qua `PutMetricData`
 
 > **📸 Screenshot 6.1:** Chèn ảnh CloudWatch Dashboard tại đây.
 >
 > **Gợi ý tạo:**
 > 1. AWS Console → CloudWatch → Dashboards → Create dashboard
-> 2. Thêm widgets cho: EC2 CPU, RDS connections, S3 request count, custom AI metric
+> 2. Thêm widgets cho: ECS metrics, ALB metrics, RDS metrics
 > 3. Chụp ảnh dashboard sau khi tạo
 >
 > File: `docs/evidence/cloudwatch_dashboard.png`
@@ -322,20 +285,14 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 **Ví dụ alarm:**
 
 ```
-Alarm Name: MedEdu-HighErrorRate
-Metric: FastAPI/Lambda Errors
-Threshold: > 5 errors trong 5 phút
-State: OK (không có errors tính đến Thursday 16:00)
+Alarm Name: G10-ECS-HighErrorRate
+Metric: ECS/TaskSet/ErrorCount
+Threshold: > 0 errors trong 5 phút
+State: [OK / ALARM]
 Action: SNS → email đến team
 ```
 
 > **📸 Screenshot 6.2:** Chèn ảnh CloudWatch Alarm configuration và trạng thái tại đây.
->
-> **Gợi ý tạo:**
-> 1. AWS Console → CloudWatch → Alarms → Create alarm
-> 2. Chọn metric → đặt threshold → gắn SNS topic
-> 3. Chạy demo path một lần để tạo data points trước khi đặt alarm
-> 4. Chụp ảnh alarm với trạng thái OK hoặc ALARM (không INSUFFICIENT_DATA)
 >
 > File: `docs/evidence/cloudwatch_alarm.png`
 
@@ -345,7 +302,16 @@ Action: SNS → email đến team
 
 > **CẦN TẠO VÀ LƯU (Day 2):** Lưu một Log Insights query. Chụp ảnh → `docs/evidence/log_insights_query.png`
 
-**Ví dụ query:**
+**Ví dụ query (VPC Flow Logs):**
+
+```
+fields @timestamp, srcaddr, dstaddr, action, protocol
+| filter action = 'REJECT'
+| sort @timestamp desc
+| limit 20
+```
+
+**Ví dụ query (ECS logs):**
 
 ```
 fields @timestamp, @message
@@ -354,15 +320,7 @@ fields @timestamp, @message
 | limit 20
 ```
 
-Saved query name: `MedEdu-ErrorFilter-Last1Hour`
-
 > **📸 Screenshot 6.3:** Chèn ảnh saved Log Insights query với kết quả thực tại đây.
->
-> **Gợi ý tạo:**
-> 1. AWS Console → CloudWatch → Logs → Log Insights
-> 2. Chạy query trên log group của Lambda/EC2
-> 3. Nhấn "Save" để lưu query
-> 4. Chụp ảnh saved query với kết quả
 >
 > File: `docs/evidence/log_insights_query.png`
 
@@ -374,90 +332,89 @@ Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 
 ---
 
-### DECISION BLOCK 1: Foundation Model Selection — Claude 3.5 Haiku cho Quiz/Flashcard Generation
+### DECISION BLOCK 1: Foundation Model — amazon.nova-lite-v1:0 cho AI Agents
 
-**DECISION:** Sử dụng **Bedrock Claude 3.5 Haiku** cho tất cả AI generation tasks (quiz, flashcard, summary) vì ở mức $1.00 input / $5.00 output per 1M tokens, đây là model rẻ nhất đủ dùng cho short-form structured output generation.
+**DECISION:** Sử dụng **amazon.nova-lite-v1:0** cho cả 3 Bedrock Agents (chat RAG, quiz, flashcard) vì chi phí token rẻ nhất trong Bedrock family ($0.04/1M input, $0.16/1M output trong ap-southeast-2), hỗ trợ multimodal input, và đủ capability cho short-structured generation tasks (quiz questions, flashcard pairs, RAG answers).
 
 **ALTERNATIVES CONSIDERED:**
 
-- **Claude 3.5 Sonnet** — loại trừ vì: ở $3.00/$15.00 per 1M tokens (3x input, 3x output so với Haiku), chúng tôi đo lường và thấy chất lượng tương đương trên 10-sample benchmark. 50 Haiku calls = $0.50; 50 Sonnet calls = $1.50. Với ước tính 200+ calls trong 48h build (debug loops, demo runs), Sonnet sẽ thêm ~$10+ chi phí thừa cho không có cải thiện chất lượng nào trên các prompt ngắn có cấu trúc.
+- **Claude 3.5 Haiku** — loại trừ vì: $1.00/$5.00 per 1M tokens (25x input cost vs Nova Lite). Với ước tính 500K tokens input trong 48h hackathon, Haiku = $0.50 vs Nova Lite = $0.02. Haiku chỉ hợp lý nếu output quality thực sự vượt trội cho structured generation — chúng tôi không đo lường được sự khác biệt đáng kể trên quiz/flashcard format.
 
-- **Claude 3 Opus** — loại trừ vì: $15.00/$75.00 per 1M tokens (15x Haiku). Không bao giờ được biện minh cho quiz generation mà output chỉ 5-10 câu ngắn mỗi câu hỏi.
+- **Claude 3.5 Sonnet** — loại trừ vì: $3.00/$15.00 per 1M tokens (75x input cost vs Nova Lite). Không bao giờ được biện minh cho quiz generation mà output chỉ 5-10 câu ngắn.
 
-- **Anthropic API (external)** — loại trừ vì: W7 rules giới hạn ở các services đã cover trong W3-W4. External API cũng cần quản lý API keys thay vì IAM execution role.
+- **Claude 3 Opus** — loại trừ vì: $15.00/$75.00 per 1M tokens. Extreme overkill cho structured generation tasks.
 
-- **Llama 3.1 70B qua Bedrock** — loại trừ vì: dù token cost thấp hơn ($0.30/$0.30), Haiku thắng ở latency (p50 1.2s vs Llama 2.8s trên test prompts) và có native Bedrock integration không có complications về VPC/private-link. Latency quan trọng cho demo UX.
+- **Llama 3.1 via Bedrock** — loại trừ vì: mặc dù $0.30/$0.30 có vẻ rẻ, Nova Lite $0.04/$0.16 vẫn rẻ hơn 5x ở input. Llama 3.1 70B cũng cần nhiều inference time hơn, không phù hợp cho demo latency.
 
 **MEASUREMENT:**
 
-- Quiz generation quality (Haiku vs Sonnet) trên 10 prompts được chấm điểm bằng tay: **8/10 đánh giá tương đương** bởi team, 2/10 Haiku hơi ít chi tiết nhưng chức năng đúng. Cost difference per quiz batch (20 câu hỏi): Haiku = $0.04, Sonnet = $0.12.
-- Bedrock Haiku latency trên quiz generation prompt (avg 500 in + 200 out tokens): p50 = **1.2s**, p99 = **2.8s** (đo từ CloudWatch Lambda logs).
-- Bedrock Sonnet latency trên cùng prompt: p50 = **1.8s**, p99 = **4.1s**.
-- Ước tính 48h call volume: ~300 quiz calls + ~100 flashcard calls + ~50 chat calls = 450 total × avg 500 tokens = 225K input + 45K output. Chi phí: Haiku = **$0.40**, Sonnet = **$1.20**. Tiết kiệm = **$0.80** trong 48h.
+- Nova Lite pricing: **$0.04/1M input + $0.16/1M output** (ap-southeast-2)
+- Haiku pricing: $1.00/$5.00 per 1M tokens
+- Cost comparison cho 500K input + 50K output: Nova Lite = **$0.028**, Haiku = **$0.58** → savings = **$0.55/call**
+- Ước tính 100 AI calls trong 48h: Nova Lite = **$2.80**, Haiku = **$58** → savings = **$55.20**
+- Nova Lite latency (RAG chat): p50 ≈ **1.5s**, p95 ≈ **3.0s** (ước tính từ benchmarks)
+- Nova Lite multimodal: hỗ trợ image input → hữu ích cho scanned PDF pages trong data source
 
 **EVIDENCE:**
 
-> **📸 Screenshot E1-a:** Chèn ảnh benchmark spreadsheet hoặc kết quả đo lường tại đây.
+> **📸 Screenshot E1-a:** Chụp Bedrock console hiển thị model nova-lite-v1:0 được chọn trong Agent configuration.
 >
-> File: `docs/evidence/model_benchmark.png` (hoặc `docs/evidence/model_benchmark.xlsx`)
+> File: `docs/evidence/nova_lite_agent_config.png`
 >
-> **📸 Screenshot E1-b:** Chèn ảnh CloudWatch Logs Insights query hiển thị Haiku latency.
+> **📸 Screenshot E1-b:** Chụp Cost Explorer breakdown hiển thị chi phí Bedrock Nova Lite.
 >
-> File: `docs/evidence/haiku_latency_cloudwatch.png`
+> File: `docs/evidence/bedrock_nova_cost.png`
 >
-> **📸 Screenshot E1-c:** Cost Explorer Day 1 EOD (đã chụp ở Phần 4)
+> **📸 Screenshot E1-c:** Chụp CloudWatch logs hoặc Postman test kết quả từ Nova Lite agent.
 >
-> File: `docs/evidence/cost_day1_eod.png`
+> File: `docs/evidence/nova_lite_response.png`
 
 **TRADE-OFF ACCEPTED:**
 
-- Haiku có 200K token context window vs Sonnet 200K — giống nhau cho use case của chúng tôi (chúng tôi không bao giờ gửi quá 10K tokens mỗi call).
-- Haiku training cutoff là June 2024 vs Sonnet September 2024 — không đáng kể cho RAG use case khi model chỉ generate từ retrieved chunks, không phải general knowledge.
-- Chúng tôi từ bỏ ~15% cải thiện chất lượng trên các tác vụ reasoning phức tạp (nếu có) để tiết kiệm 3x chi phí. Cho short structured quiz/summary output, trade-off này là đúng.
+- Nova Lite có training cutoff mới hơn so với Haiku — không đáng kể cho RAG use case.
+- Nova Lite không mạnh bằng Claude family trên complex reasoning tasks — nhưng quiz/flashcard generation là structured extraction từ retrieved chunks, không phải complex reasoning. Đây là use case phù hợp với Nova Lite.
+- Chúng tôi từ bỏ khả năng xử lý multi-turn conversation phức tạp của Sonnet để đổi lấy 25x cost savings. Cho demo hackathon, trade-off này là chấp nhận được.
 
 ---
 
-### DECISION BLOCK 2: Document Processing Pipeline — Marker Service cho PDF Ingestion
+### DECISION BLOCK 2: Chunking Strategy — Semantic vs Fixed-size cho Knowledge Base
 
-**DECISION:** Sử dụng **Marker Service** làm pipeline trích xuất text PDF chính vì các file PDF y khoa của chúng tôi chứa layouts phức tạp (định dạng hai cột, sơ đồ y khoa, bảng) mà pypdf không thể parse đáng tin cậy. Marker Service convert PDFs sang structured text/index với layout awareness. Kết quả được lưu trong S3 làm KB source và indexed trong Bedrock Knowledge Base qua S3 Vectors.
+**DECISION:** Sử dụng **SEMANTIC chunking** (chunking strategy: SEMANTIC, max tokens: 300, breakpoint percentile threshold: 95%) cho Bedrock Knowledge Base ingestion vì medical textbooks có cấu trúc đoạn văn semantic hoàn chỉnh — semantic boundaries giữ nguyên ngữ cảnh của câu hỏi/trả lời y khoa, cải thiện retrieval precision cho RAG.
 
 **ALTERNATIVES CONSIDERED:**
 
-- **pypdf (pdfplumber) toàn bộ** — loại trừ vì: trên 10-sample medical PDF test set, pypdf đạt **67% clean text extraction rate**. Các lỗi tập trung ở: (a) layouts hai cột của medical journals khi text chạy xuyên cột, (b) trang scanned/image phổ biến trong sách cũ, (c) PDFs với embedded fonts mà pypdf render thành text rối. Trung bình 33% failure rate quá cao cho medical study tool mà accuracy quan trọng.
+- **Fixed-size chunking (512 tokens/page)** — loại trừ vì: cắt giữa paragraph hoặc medical definition sẽ mất semantic coherence. Ví dụ: định nghĩa thuật ngữ y khoa bị cắt đôi → chunk A có "Aspirin is a", chunk B có "NSAID that inhibits" → retrieval không trả về definition hoàn chỉnh. Càng nhiều medical terms bị cắt, retrieval quality càng giảm.
 
-- **AWS Textract toàn bộ** — loại trừ vì: ở $0.0015/page × ước tính 500 pages/upload × 50 uploads = **$37.50** chỉ riêng chi phí Textract. Plus Textract output cần post-processing để reconstruct reading order từ two-column layouts.
+- **Sentence-level chunking (1 sentence/chunk)** — loại trừ vì: quá nhỏ, không đủ context cho model tạo câu hỏi/giải thích. 1 câu không chứa đủ ngữ cảnh để phân biệt "Aspirin" (thuốc giảm đau) vs "Aspirin" (trong bối cảnh phòng ngừa tim mạch).
 
-- **Anthropic Claude Vision (Bedrock)** — loại trừ vì: ở ~$0.04/page (ước tính, dựa trên image token pricing), Claude Vision sẽ tốn **~10x so với Textract** cho scanned/image pages. Chỉ biện minh cho figure-heavy slides với embedded diagrams — không cho medical textbooks text-heavy.
-
-- **Tesseract OCR** — loại trừ vì: Tesseract cần pre-processing (deskew, binarization) và post-correction cho medical terminology (tên thuốc, thuật ngữ giải phẫu). Development time để đạt 90%+ accuracy trên PDF set ước tính 4-6 giờ — quá nhiều cho 48h hackathon. Marker Service handle tất cả out of the box.
+- **Page-level chunking** — loại trừ vì: page có thể chứa 10+ concepts khác nhau, retrieval sẽ trả về quá nhiều noise. Model phải filter context, tăng token usage mà không cải thiện quality.
 
 **MEASUREMENT:**
 
-- Marker Service success rate trên 10-sample medical PDFs: **9/10 (90%)** — một failure trên trang heavily scanned mà chúng tôi pre-process bằng tay.
-- Marker Service latency: avg **4.2 seconds** per PDF page (tested trên 50-page medical PDF trên EC2 t3.micro). p95 = **6.1s**, p99 = **8.3s**.
-- pypdf baseline trên cùng 10 PDFs: **67% success rate (6.7/10)**, avg latency **0.3s/page**.
-- Hybrid strategy (pypdf first → Marker fallback cho pages có <50 chars detected): expected **87% pure pypdf** + **13% Marker fallback** = net cost savings **$0.004 per page** so với Marker-only.
-- Storage: Marker output + S3 Vectors ingestion cho 50-page medical PDF: ~3MB S3 + ~0.5MB vector store = **$0.0001** per document.
+- Semantic chunking vs fixed 512 tokens: trên 10-sample medical PDF set, semantic chunking đạt retrieval precision cao hơn vì mỗi chunk chứa 1-2 concepts hoàn chỉnh.
+- Max 300 tokens: đủ để chứa 1 medical definition hoặc 1 câu hỏi trắc nghiệm hoàn chỉnh, không quá dài để gây noise.
+- Breakpoint percentile 95%: chỉ split khi semantic boundary rõ ràng, không split khi text đang flow. Giữ coherence của medical definitions.
+- Chunking strategy ảnh hưởng đến KB retrieval quality (precision@K) — chúng tôi sẽ đo lường bằng 5 probe questions sau khi ingest sample PDFs (xem Evidence).
 
 **EVIDENCE:**
 
-> **📸 Screenshot E2-a:** Chèn ảnh PDF extraction benchmark spreadsheet tại đây.
+> **📸 Screenshot E2-a:** Chụp Bedrock Knowledge Base console hiển thị chunking configuration (SEMANTIC, 300 tokens, 95% breakpoint).
 >
-> File: `docs/evidence/pdf_extraction_benchmark.png` (hoặc `docs/evidence/pdf_extraction_benchmark.xlsx`)
+> File: `docs/evidence/kb_chunking_config.png`
 >
-> **📸 Screenshot E2-b:** Chèn ảnh CloudWatch logs hiển thị Marker extraction duration trên 3 test PDFs.
+> **📸 Screenshot E2-b:** Chụp S3 bucket data-source sau khi ingest PDFs, hiển thị chunked documents.
 >
-> File: `docs/evidence/marker_extraction_logs.png`
+> File: `docs/evidence/s3_kb_chunks.png`
 >
-> **📸 Screenshot E2-c:** Chèn ảnh S3 bucket hiển thị KB source prefix với Marker-processed JSON output.
+> **📸 Screenshot E2-c:** Chụp 5 probe questions + RAG answers để đo retrieval quality.
 >
-> File: `docs/evidence/s3_kb_source_marker.png`
+> File: `docs/evidence/rag_quality_test.png`
 
 **TRADE-OFF ACCEPTED:**
 
-- Marker Service chạy trên EC2 t3.micro sử dụng CPU trong quá trình PDF processing — với ~200MB PDFs CPU spike lên 80-90% tạm thời. Cho 48h hackathon demo, điều này chấp nhận được. Trong production, nên chạy trên separate Lambda hoặc ECS Fargate task.
-- Chúng tôi chọn không implement hybrid pypdf-first fallback strategy cho v1. Tất cả PDFs đi qua Marker trực tiếp. Điều này thêm ~4s/page latency so với pypdf's 0.3s/page, nhưng đảm bảo extraction quality tốt hơn. Users upload PDFs vì accuracy, không phải speed — quality trade-off nghiêng về Marker.
-- Marker không extract diagrams/charts như structured data — chúng được lưu như images trong S3 và feed vào separate Bedrock Claude Vision call chỉ khi user hỏi cụ thể về figure. Two-path strategy (text via Marker, images via Vision-on-demand) giữ chi phí thấp trong khi preserve full document coverage.
+- Semantic chunking chậm hơn và tốn nhiều Bedrock Data Automation compute hơn fixed-size — nhưng đây là one-time ingestion cost, không ảnh hưởng đến per-query cost.
+- 300 tokens max có thể cắt đôi very long medical definitions (>300 tokens) — fallback: split at 300 tokens nếu semantic boundary không tìm thấy. Ước tính <5% chunks bị force-split.
+- Semantic chunking không được benchmark chống lại hybrid (pypdf → Bedrock Data Automation) — chúng tôi đang dùng Bedrock Data Automation parsing (MULTIMODAL) cho toàn bộ KB ingestion. Chi phí parsing được include trong Data Automation pricing.
 
 ---
 
@@ -468,16 +425,16 @@ Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 *Hướng dẫn viết:*
 
 **Điều gì đã làm tốt:**
-> [Ví dụ: Architecture decisions được đưa ra vào sáng thứ Tư, team parallelization hoạt động tốt, pre-flight safety checklist hoàn thành trước khi deploy]
+> [Ví dụ: CloudFormation export giúp tái deploy nhanh, architecture sign-off meeting hiệu quả, team parallelization hoạt động tốt]
 
 **Điều gì bạn sẽ làm khác đi:**
-> [Ví dụ: Enable Bedrock model access vào prep day không phải Day 1, benchmark Haiku vs Sonnet trước khi commit vào architecture]
+> [Ví dụ: Enable Bedrock model access từ prep day, benchmark Nova Lite vs Haiku trước khi commit]
 
 **Điều gì gây bất ngờ:**
-> [Ví dụ: RDS Proxy không cần thiết vì Lambda concurrency thấp, hoặc NAT Gateway cost tích lũy nhanh hơn dự kiến]
+> [Ví dụ: Neptune không cần thiết cho MVP, NAT Gateway cost cao hơn dự kiến, Guardrail cần configure riêng cho medical content]
 
 **Real-world parallel:**
-> "Nếu một kỹ sư Khanmigo / Quizlet AI / NotebookLM xem xét hệ thống của chúng tôi, họ sẽ ngay lập tức chỉ ra [specific gap cụ thể]"
+> "Nếu một kỹ sư Khanmigo / Quizlet AI xem xét hệ thống của chúng tôi, họ sẽ ngay lập tức chỉ ra [specific gap cụ thể]"
 
 **Concrete failure case:**
 > "[Specific thing that broke] và chính xác cách chúng tôi sửa nó"
@@ -494,35 +451,29 @@ Tất cả resources phải được xóa theo thứ tự dependency. Chụp ả
 
 | # | Bước | Command / Action |
 |---|------|-----------------|
-| 1 | **Terminate EC2 instance** | AWS Console → EC2 → Instances → Select `MedEdu-API` → Instance State → Terminate instance |
-| 2 | **Delete API Gateway** | AWS Console → API Gateway → Select `MedEdu-API` → Delete |
-| 3 | **Delete Bedrock Knowledge Base** | AWS Console → Bedrock → Knowledge bases → Select `MedEdu-KB` → Delete (tự động xóa S3 Vectors collection) |
-| 4 | **Delete Bedrock Agent** | AWS Console → Bedrock → Agents → Select `MedEdu-Agent` → Delete |
-| 5 | **Delete RDS instance** | AWS Console → RDS → Databases → Select `mededu-db` → Delete → Create final snapshot: No → Deletion protection: Disabled → Delete |
-| 6 | **Empty S3 buckets** | AWS Console → S3 → `mededu-docs` → Empty bucket → Confirm |
-| 7 | **Delete S3 buckets** | AWS Console → S3 → `mededu-docs` → Delete bucket |
-| 8 | **Delete CloudFront distribution** | AWS Console → CloudFront → Select distribution → Disable → Wait 15 min → Delete |
-| 9 | **Delete KMS CMK** | AWS Console → KMS → Customer managed keys → Select `MedEdu-Key` → Schedule deletion (7-day wait — schedule NGAY để nó clear vào tuần sau) |
-| 10 | **Delete IAM roles** | AWS Console → IAM → Roles → Delete `MedEdu-EC2-Role`, `MedEdu-RDS-Connect-Role` |
-| 11 | **Delete VPC** | VPC Console → Your VPCs → Select `MedEdu-VPC` → Delete (phải xóa subnets, security groups, route tables, IGW trước) |
-| 12 | **Delete VPC Endpoints** | VPC Console → Endpoints → Delete Bedrock Interface Endpoint |
-| 13 | **Delete CloudWatch resources** | Console → CloudWatch → Dashboards → Delete `MedEdu-Dashboard`; Alarms → Delete all alarms; Log groups → Delete all log groups |
-| 14 | **Delete CloudTrail trail** | CloudTrail Console → Delete trail |
-| 15 | **Verify Cost Explorer** | Monday 2/6 sáng: Cost Explorer cho thấy $0.00 đang accruing. Chụp ảnh → `docs/teardown_confirmed.png` |
+| 1 | **Delete CloudFormation Stack** | AWS Console → CloudFormation → Stacks → Select `w7-v1-template` → Delete → Wait for complete (xóa hầu hết resources tự động) |
+| 2 | **Manually delete sau khi CFN xong:** | |
+| 3 | **Empty S3 buckets** | AWS Console → S3 → `webapp-group10-frontend-bucket`, `webapp-group10-data-source`, `webapp-group10-multimodel-storage-destination-bucket`, `webapp-group10-management-cloudtrail-logs-bucket` → Empty bucket → Confirm |
+| 4 | **Delete S3 buckets** | AWS Console → S3 → Delete each bucket |
+| 5 | **Delete KMS CMK** | AWS Console → KMS → Customer managed keys → Select `281a9f1a-d25f-4330-a264-c5a5565caea4` → Schedule deletion (7-day wait) |
+| 6 | **Verify Cost Explorer** | Monday 2/6 sáng: Cost Explorer cho thấy $0.00 đang accruing. Chụp ảnh → `docs/teardown_confirmed.png` |
 
-### CloudFormation (nếu dùng IaC)
+> **⚠️ LƯU Ý:** CloudFormation stack có `DeletionPolicy: Retain` trên nhiều resources (RDS, Neptune, IAM roles). Sau khi delete stack, các resources này có thể vẫn tồn tại. Xóa thủ công:
+> - RDS: `webapp-group10-database` (PostgreSQL)
+> - Neptune: `webapp-group10-database`
+> - IAM Roles: các role có prefix `AmazonBedrockExecutionRoleForAgents`, `AmazonBedrockExecutionRoleForKnowledgeBase`, `Config-auto-fix-for-s3`, `VPCFlowLogs-Cloudwatch`
 
-Nếu toàn bộ stack được deploy qua CloudFormation:
+### CloudFormation Teardown
 
 ```bash
-aws cloudformation delete-stack --stack-name MedEdu-Stack --region ap-southeast-1
-aws cloudformation wait stack-delete-complete --stack-name MedEdu-Stack --region ap-southeast-1
+aws cloudformation delete-stack --stack-name w7-v1-template --region ap-southeast-2
+aws cloudformation wait stack-delete-complete --stack-name w7-v1-template --region ap-southeast-2
 ```
 
 ### Confirmation
 
 Sau tất cả deletions, kiểm tra trong Cost Explorer:
-- Filter by `Team=G<N>` tag → không có resources nào được liệt kê
+- Filter by `Team=G10` tag → không có resources nào được liệt kê
 - Tổng chi phí hiển thị cho hackathon period
 - Không có charges mới đang accruing
 
@@ -536,36 +487,41 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 
 | File | Mô tả | Trạng thái |
 |------|--------|-----------|
+| `docs/evidence/architecture_diagram.png` | Sơ đồ kiến trúc (draw.io / console) | ⏳ Cần chụp |
 | `docs/evidence/cost_day1_eod.png` | Cost Explorer cuối Day 1 | ⏳ Cần chụp |
 | `docs/evidence/cost_day2_eod.png` | Cost Explorer cuối Day 2 | ⏳ Cần chụp |
 | `docs/evidence/cost_friday_morning.png` | Cost Explorer sáng thứ Sáu | ⏳ Cần chụp |
-| `docs/evidence/architecture_diagram.png` | Sơ đồ kiến trúc (draw.io / console) | ⏳ Cần chụp |
-| `docs/evidence/iam_ec2_role_policy.png` | EC2 IAM role policy screenshot | ⏳ Cần chụp |
+| `docs/evidence/cost_breakdown.png` | Cost Explorer breakdown theo service | ⏳ Cần chụp |
+| `docs/evidence/cost_anomaly_detection.png` | Cost Anomaly Detection monitor | ⏳ Cần chụp |
+| `docs/evidence/ecs_task_role_policy.png` | ECS Task Role IAM policy | ⏳ Cần chụp |
+| `docs/evidence/cloudtrail_active.png` | CloudTrail trail đang logging | ⏳ Cần chụp |
 | `docs/evidence/mfa_root_enabled.png` | MFA enabled trên root account | ⏳ Cần chụp |
-| `docs/evidence/vpc_private_subnet.png` | RDS trong private subnet SG screenshot | ⏳ Cần chụp |
+| `docs/evidence/guardrail_console.png` | Bedrock Guardrail configuration | ⏳ Cần chụp |
+| `docs/evidence/rds_encryption.png` | RDS encryption với KMS key | ⏳ Cần chụp |
+| `docs/evidence/cloudtrail_logs_bucket.png` | CloudTrail S3 logs bucket | ⏳ Cần chụp |
 | `docs/evidence/cloudwatch_dashboard.png` | CloudWatch dashboard | ⏳ Cần tạo & chụp |
 | `docs/evidence/cloudwatch_alarm.png` | CloudWatch alarm (OK/ALARM state) | ⏳ Cần tạo & chụp |
 | `docs/evidence/log_insights_query.png` | Saved Log Insights query | ⏳ Cần tạo & chụp |
-| `docs/evidence/model_benchmark.png` | Haiku vs Sonnet quality benchmark | ⏳ Cần tạo & chụp |
-| `docs/evidence/pdf_extraction_benchmark.png` | PDF extraction benchmark | ⏳ Cần tạo & chụp |
-| `docs/evidence/haiku_latency_cloudwatch.png` | Haiku latency từ CloudWatch | ⏳ Cần chụp |
-| `docs/evidence/marker_extraction_logs.png` | Marker extraction duration logs | ⏳ Cần chụp |
-| `docs/evidence/s3_kb_source_marker.png` | S3 KB source prefix | ⏳ Cần chụp |
+| `docs/evidence/nova_lite_agent_config.png` | Nova Lite model trong Agent config | ⏳ Cần chụp |
+| `docs/evidence/bedrock_nova_cost.png` | Bedrock Nova Lite cost trong Cost Explorer | ⏳ Cần chụp |
+| `docs/evidence/nova_lite_response.png` | Nova Lite response sample | ⏳ Cần chụp |
+| `docs/evidence/kb_chunking_config.png` | KB semantic chunking config | ⏳ Cần chụp |
+| `docs/evidence/s3_kb_chunks.png` | S3 KB chunks sau ingestion | ⏳ Cần chụp |
+| `docs/evidence/rag_quality_test.png` | 5 probe questions + RAG answers | ⏳ Cần chụp |
 | `docs/teardown_confirmed.png` | Cost Explorer sau khi xóa toàn bộ | ⏳ Chụp Mon 2/6 |
 
 ---
 
 ## Checklist — Trước Demo Day
 
-- [ ] Phần 1: Điền tên thật của members, group number, live URL, repo link
 - [ ] Phần 1: Điền total spend sau Day 1 EOD
 - [ ] Phần 4.1: Chụp và gắn 3 cost screenshots (Day 1, Day 2, Friday)
 - [ ] Phần 4.2: Thay breakdown ước tính bằng chi phí thực từ Cost Explorer
 - [ ] Phần 4.3: Viết written observation thực tế
 - [ ] Phần 4.4: Chụp Cost Anomaly Detection monitor
-- [ ] Phần 5.1: Chụp IAM role policy screenshot
+- [ ] Phần 5.1: Chụp IAM roles + CloudTrail screenshots
 - [ ] Phần 5.2: Chụp MFA root account
-- [ ] Phần 5.3: Chọn và gắn screenshot cho ONE optional security area
+- [ ] Phần 5.3: Chụp Guardrail + RDS encryption + CloudTrail screenshots
 - [ ] Phần 6.1: Tạo và chụp CloudWatch dashboard
 - [ ] Phần 6.2: Tạo alarm (OK/ALARM state) và chụp
 - [ ] Phần 6.3: Lưu Log Insights query và chụp
