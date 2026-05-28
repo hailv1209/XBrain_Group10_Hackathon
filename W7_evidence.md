@@ -18,7 +18,7 @@
 | **AWS Account** | 493499579600 |
 | **Region** | ap-southeast-2 (Sydney) |
 | **Tổng chi phí (tính đến hiện tại)** | $[—] — chụp ảnh Cost Explorer cuối Day 1 để điền |
-| **Pre-flight safety** | MFA trên root ✅ | Budget alert $80 ✅ | Cost Anomaly Detection ✅ | Gắn tag ✅ | Bedrock access đã request ✅ |
+| **Pre-flight safety** | MFA trên root | Budget alert $80 | Cost Anomaly Detection  | Gắn tag | Bedrock access đã request |
 
 > **CẦN ĐIỀN (trước thứ Sáu):** Thay tất cả các chỗ `[—]` bằng giá trị thực từ AWS Console.
 
