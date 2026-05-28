@@ -182,7 +182,7 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 
 #### ECS Task Role (Bedrock + S3 + RDS access)
 
-<img width="1524" height="478" alt="image" src="https://github.com/user-attachments/assets/4f0c4f44-9ea0-44b5-b420-fc46f991f8aa" />
+<img width="1565" height="720" alt="image" src="https://github.com/user-attachments/assets/a86b74a3-d744-48a0-9b93-a170b493e520" />
 
 > aiRelatedFeaturePermissions
 ```
