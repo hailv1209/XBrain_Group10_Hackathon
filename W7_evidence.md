@@ -634,7 +634,7 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 >
 > File: `docs/teardown_confirmed.png`
 
-## 5. Optional Capabilities (bonus — drive higher scores, partial credit)
+## 9. Optional Capabilities (bonus — drive higher scores, partial credit)
 
 Nhóm chọn cả **3 capabilities** để tối đa hóa điểm bonus:
 
@@ -646,27 +646,27 @@ Nhóm chọn cả **3 capabilities** để tối đa hóa điểm bonus:
 
 ---
 
-### 8. Full Observability ★
+### 9.1. Full Observability ★
 
-#### 8.1 CloudWatch Dashboard
+#### 9.1.1 CloudWatch Dashboard
 
 Dashboard CloudWatch giám sát hoạt động bảo mật AWS theo thời gian thực, bao gồm: số lần đăng nhập Console, trạng thái cảnh báo CloudWatch, nhật ký CloudTrail, truy vết hoạt động IAM và API.
 
 <img width="1293" height="751" alt="image" src="https://github.com/user-attachments/assets/d3e38329-805d-4aa1-8a9e-122ad33e9f28" />
 
-#### 8.2 Custom Metric (PutMetricData)
+#### 9.1.2 Custom Metric (PutMetricData)
 
 Custom Metric CloudWatch được tạo từ CloudTrail Logs để theo dõi sự kiện `ConsoleLogin` theo thời gian thực.
 
 <img width="1917" height="592" alt="image" src="https://github.com/user-attachments/assets/35cdcabc-309b-4c56-81d4-4c6bb176f425" />
 
-#### 8.3 CloudWatch Alarm (OK/ALARM state)
+#### 9.1.3 CloudWatch Alarm (OK/ALARM state)
 
 Alarm được cấu hình để phát hiện sự kiện đăng nhập Console bất thường. Alarm chuyển sang trạng thái **"In alarm"** khi số lượng `ConsoleLogin` vượt ngưỡng cấu hình.
 
 <img width="1920" height="338" alt="image" src="https://github.com/user-attachments/assets/3e11139c-e817-4b1b-b780-e059ff6c88f7" />
 
-#### 8.4 CloudWatch Logs Insights Query
+#### 9.1.4 CloudWatch Logs Insights Query
 
 CloudWatch Logs Insights phân tích và điều tra hoạt động CloudTrail, bao gồm: hành động API, địa chỉ IP nguồn, IAM user, AWS region, dịch vụ AWS liên quan.
 
@@ -674,7 +674,7 @@ CloudWatch Logs Insights phân tích và điều tra hoạt động CloudTrail, 
 
 ---
 
-### 9. Advanced Cost Insights
+### 9.2 Advanced Cost Insights
 
 Chi tiết đầy đủ tại **Phần 4. Cost Discipline** — bao gồm:
 - Cost breakdown ước tính 48h ở ap-southeast-2
@@ -683,13 +683,13 @@ Chi tiết đầy đủ tại **Phần 4. Cost Discipline** — bao gồm:
 
 ---
 
-### 10. Advanced Security — Network Hardening ★
+### 9.3 Advanced Security — Network Hardening ★
 
-#### 10.1 VPC Flow Logs
+#### 9.3.1 VPC Flow Logs
 
 VPC Flow Logs được bật trên toàn bộ VPC (`vpc-0b64a757960665b9a`) với `TrafficType: ALL`, ghi nhận mọi traffic flow (accept/reject) vào CloudWatch Log Group `webapp-group10-vpc-flow-log`. Mọi resources đều gắn tag `Team=G10`.
 
-#### 10.2 Security Groups — Strictness
+#### 9.3.2 Security Groups — Strictness
 
 Các Security Groups được cấu hình theo nguyên tắc **least privilege**:
 
@@ -699,7 +699,7 @@ Các Security Groups được cấu hình theo nguyên tắc **least privilege**
 | `webapp-group10-ecs-sg` | TCP 8000 | ALB Security Group (`sg-04ce6e7d9e0edffc9`) | ECS chỉ nhận traffic từ ALB |
 | `webapp-group10-rds-sg` | TCP 5432 | ECS Security Group (`sg-0712195931f95905a`) | RDS PostgreSQL chỉ accept từ ECS, không phải 0.0.0.0/0 |
 
-#### 10.3 Measurement
+#### 9.3.3 Measurement
 
 Dựa trên VPC Flow Logs đã thu thập:
 
