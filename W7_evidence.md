@@ -416,10 +416,10 @@ Dựa trên CloudFormation template, nhóm đã implement các security features
 **Ví dụ alarm:**
 
 ```
-Alarm Name: G10-ECS-HighErrorRate
-Metric: ECS/TaskSet/ErrorCount
-Threshold: > 0 errors trong 5 phút
-State: [OK / ALARM]
+Alarm Name: CloudTrail-ConsoleLogin-Alarm
+Metric: ConsoleLoginCount
+Threshold: >= 1 lần đăng nhập trong 1 phút (1 datapoints within 1 minute)
+State: OK
 Action: SNS → email đến team
 ```
 
