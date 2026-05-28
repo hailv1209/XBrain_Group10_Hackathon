@@ -182,9 +182,60 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 
 #### ECS Task Role (Bedrock + S3 + RDS access)
 
-> **📸 Screenshot 5.1a:** Chụp ảnh ECS Task Role policy từ AWS Console.
+<img width="1524" height="478" alt="image" src="https://github.com/user-attachments/assets/4f0c4f44-9ea0-44b5-b420-fc46f991f8aa" />
+'''
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "InvokeThreeBedrockAgents",
+            "Effect": "Allow",
+            "Action": "bedrock:InvokeAgent",
+            "Resource": [
+                "arn:aws:bedrock:ap-southeast-2:*:agent-alias/ECQAJVXGPT/E67OAJGSL9",
+                "arn:aws:bedrock:ap-southeast-2:*:agent-alias/F80FKASMRV/CM5YMEGKWE",
+                "arn:aws:bedrock:ap-southeast-2:*:agent-alias/BCOQX4GQEA/7FNZNI5UPO"
+            ]
+        },
+        {
+            "Sid": "RetrieveFromKnowledgeBase",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:Retrieve",
+                "bedrock:RetrieveAndGenerate"
+            ],
+            "Resource": "arn:aws:bedrock:ap-southeast-2:*:knowledge-base/OY2MYERT59"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:StartIngestionJob",
+                "bedrock:GetIngestionJob"
+            ],
+            "Resource": "arn:aws:bedrock:ap-southeast-2:493499579600:knowledge-base/OY2MYERT59"
+        },
+        {
+            "Sid": "ListBucket",
+            "Effect": "Allow",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::webapp-group10-data-source"
+        },
+        {
+            "Sid": "ReadWriteObjects",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::webapp-group10-data-source/*"
+        }
+    ]
+}
+'''
 >
 > File: `docs/evidence/ecs_task_role_policy.png`
+> 
 
 Từ CloudFormation template, các IAM roles quan trọng:
 
