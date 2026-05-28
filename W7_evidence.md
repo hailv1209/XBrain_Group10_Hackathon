@@ -301,9 +301,10 @@ Từ CloudFormation template, các IAM roles quan trọng:
 
 MFA device đã cấu hình trên AWS root account. Root credentials được lưu trữ bảo mật. IAM users đã được tạo cho mỗi thành viên với quyền phù hợp.
 
-> **📸 Screenshot 5.2:** Chụp ảnh MFA đã enabled trên root account.
->
-> File: `docs/evidence/mfa_root_enabled.png`
+<img width="2048" height="735" alt="image" src="https://github.com/user-attachments/assets/77d03892-8bed-478c-9dd1-f75423f6451a" />
+
+> **📸 Screenshot 5.2:** Ảnh MFA đã enabled trên root account.
+
 
 ### 5.3 Optional #10 Security Area — Guardrail + Encryption + CloudTrail (đã implement)
 
