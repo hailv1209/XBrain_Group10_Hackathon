@@ -1,4 +1,4 @@
-<img width="1152" height="648" alt="image" src="https://github.com/user-attachments/assets/7eac0458-f408-42f1-8dd0-235bc4970732" /># W7 Evidence Pack — Group 10, MedEdu (EduTech: AI Study Buddy)
+MedEdu (EduTech: AI Study Buddy)
 
 > **Hackathon:** W7 Capstone — Ship Production-Ready AI in 48 Hours
 > **Compiled:** Thứ Tư 28/5/2026 — Day 1 Build
