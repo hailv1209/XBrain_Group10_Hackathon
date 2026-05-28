@@ -183,8 +183,10 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 #### ECS Task Role (Bedrock + S3 + RDS access)
 
 <img width="1524" height="478" alt="image" src="https://github.com/user-attachments/assets/4f0c4f44-9ea0-44b5-b420-fc46f991f8aa" />
-'''
-{
+
+>
+> File: `docs/evidence/ecs_task_role_policy.png`
+`{
     "Version": "2012-10-17",
     "Statement": [
         {
@@ -231,11 +233,7 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
             "Resource": "arn:aws:s3:::webapp-group10-data-source/*"
         }
     ]
-}
-'''
->
-> File: `docs/evidence/ecs_task_role_policy.png`
-> 
+}`
 
 Từ CloudFormation template, các IAM roles quan trọng:
 
