@@ -1,4 +1,4 @@
-MedEdu (EduTech: AI Study Buddy)
+# W7 Evidence Pack — Group 10, MedEdu (EduTech: AI Study Buddy)
 
 > **Hackathon:** W7 Capstone — Ship Production-Ready AI in 48 Hours
 > **Compiled:** Thứ Tư 28/5/2026 — Day 1 Build
