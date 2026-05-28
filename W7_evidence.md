@@ -743,7 +743,7 @@ Chi tiết đầy đủ tại **Phần 4. Cost Discipline** — bao gồm:
 
 ---
 
-### 9.3 Advanced Security — Network Hardening ★
+### 9.3 Advanced Security — Network Hardening
 
 #### 9.3.1 VPC Flow Logs
 
