@@ -286,6 +286,8 @@ Từ CloudFormation template, các IAM roles quan trọng:
 #### CloudTrail — Audit Logging
 
 > **📸 Screenshot 5.1b:** Chụp CloudTrail console hiển thị trail đang logging.
+<img width="1587" height="457" alt="image" src="https://github.com/user-attachments/assets/31698280-3c16-462f-be6f-af83614f000c" />
+
 >
 > File: `docs/evidence/cloudtrail_active.png`
 
