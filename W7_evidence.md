@@ -186,7 +186,8 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 
 >
 > File: `docs/evidence/ecs_task_role_policy.png`
-`{
+```
+{
     "Version": "2012-10-17",
     "Statement": [
         {
@@ -233,7 +234,8 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
             "Resource": "arn:aws:s3:::webapp-group10-data-source/*"
         }
     ]
-}`
+}
+```
 
 Từ CloudFormation template, các IAM roles quan trọng:
 
