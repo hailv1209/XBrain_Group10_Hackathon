@@ -468,49 +468,63 @@ fields @timestamp, @message
 
 ---
 
-### DECISION BLOCK 1: Foundation Model — amazon.nova-lite-v1:0 cho AI Agents
+### DECISION BLOCK 1: Foundation Model — Per-Agent Model Selection (Claude Family)
 
-**DECISION:** Sử dụng **amazon.nova-lite-v1:0** cho cả 3 Bedrock Agents (chat RAG, quiz, flashcard) vì chi phí token rẻ nhất trong Bedrock family ($0.04/1M input, $0.16/1M output trong ap-southeast-2), hỗ trợ multimodal input, và đủ capability cho short-structured generation tasks (quiz questions, flashcard pairs, RAG answers).
+**DECISION:** Sử dụng **3 foundation models riêng cho từng Bedrock Agent** dựa trên đặc thù workload của mỗi task:
+
+| Agent | Model | Inference Profile | Lý do chọn |
+|-------|-------|-------------------|-------------|
+| Chat RAG | `au.anthropic.claude-haiku-4-5-20251001-v1:0` | ap-southeast-2 | RAG chat là tác vụ light — Haiku đủ nhanh, rẻ, và phù hợp cho single-turn Q&A ngắn gọn. AP Southeast inference profile giảm cross-region latency. |
+| Quiz Generator | `global.anthropic.claude-sonnet-4-6` | global | Tạo quiz cần reasoning mạnh — Sonnet 4 vượt trội ở structured generation với 4 lựa chọn chính xác, giải thích súc tích. Global profile đảm bảo routing đến region có capacity tốt nhất. |
+| Flashcard Generator | `global.anthropic.claude-sonnet-4-6` | global | Tương tự quiz — flashcard generation cần hiểu context để tách front/back hoàn chỉnh. Sonnet 4 xử lý tốt hơn với multi-paragraph chunks từ KB. |
 
 **ALTERNATIVES CONSIDERED:**
 
-- **Claude 3.5 Haiku** — loại trừ vì: $1.00/$5.00 per 1M tokens (25x input cost vs Nova Lite). Với ước tính 500K tokens input trong 48h hackathon, Haiku = $0.50 vs Nova Lite = $0.02. Haiku chỉ hợp lý nếu output quality thực sự vượt trội cho structured generation — chúng tôi không đo lường được sự khác biệt đáng kể trên quiz/flashcard format.
+- **Nova Lite cho tất cả 3 agents** — loại trừ vì: Nova Lite không mạnh bằng Claude family cho structured generation tasks. Quiz generation (4 lựa chọn, đúng/sai, giải thích) và flashcard generation (front/back separation) đòi hỏi reasoning mà Nova Lite không đảm bảo. Dùng Haiku cho chat + Sonnet cho quiz/flashcard là tối ưu hơn việc dùng 1 model cho cả 3.
 
-- **Claude 3.5 Sonnet** — loại trừ vì: $3.00/$15.00 per 1M tokens (75x input cost vs Nova Lite). Không bao giờ được biện minh cho quiz generation mà output chỉ 5-10 câu ngắn.
+- **Claude 3.5 Sonnet cho tất cả 3 agents** — loại trừ vì: Sonnet có giá $3.00/$15.00 per 1M tokens (vs Haiku $1.00/$5.00). RAG chat chỉ cần trả lời ngắn 1-2 câu — Haiku đủ cho use case này. Dùng Sonnet cho chat là overkill, lãng phí chi phí.
 
-- **Claude 3 Opus** — loại trừ vì: $15.00/$75.00 per 1M tokens. Extreme overkill cho structured generation tasks.
+- **Claude 3.5 Opus cho tất cả 3 agents** — loại trừ vì: $15.00/$75.00 per 1M tokens. Không bao giờ được biện minh cho quiz/flashcard generation — structured extraction không cần reasoning cấp cao.
 
-- **Llama 3.1 via Bedrock** — loại trừ vì: mặc dù $0.30/$0.30 có vẻ rẻ, Nova Lite $0.04/$0.16 vẫn rẻ hơn 5x ở input. Llama 3.1 70B cũng cần nhiều inference time hơn, không phù hợp cho demo latency.
+- **Llama 3.1 via Bedrock cho tất cả 3 agents** — loại trừ vì: mặc dù token cost thấp hơn, Claude family vượt trội rõ rệt trên structured generation (JSON output đúng format, câu hỏi có 4 lựa chọn chính xác). Llama 3.1 70B qua inference profile không có native Bedrock KB integration.
 
 **MEASUREMENT:**
 
-- Nova Lite pricing: **$0.04/1M input + $0.16/1M output** (ap-southeast-2)
-- Haiku pricing: $1.00/$5.00 per 1M tokens
-- Cost comparison cho 500K input + 50K output: Nova Lite = **$0.028**, Haiku = **$0.58** → savings = **$0.55/call**
-- Ước tính 100 AI calls trong 48h: Nova Lite = **$2.80**, Haiku = **$58** → savings = **$55.20**
-- Nova Lite latency (RAG chat): p50 ≈ **1.5s**, p95 ≈ **3.0s** (ước tính từ benchmarks)
-- Nova Lite multimodal: hỗ trợ image input → hữu ích cho scanned PDF pages trong data source
+- **Chat RAG (Haiku)**: $1.00 input / $5.00 output per 1M tokens (ap-southeast-2 inference)
+  - Ước tính 200 chat sessions × avg 1K input + 200 output tokens = 200K in + 40K out
+  - Cost: **$0.20** + **$0.20** = **$0.40** cho 48h
+
+- **Quiz Generator (Sonnet 4)**: $3.00 input / $15.00 output per 1M tokens (global inference)
+  - Ước tính 50 quiz generations × avg 5K input + 2K output tokens = 250K in + 100K out
+  - Cost: **$0.75** + **$1.50** = **$2.25** cho 48h
+
+- **Flashcard Generator (Sonnet 4)**: $3.00 input / $15.00 output per 1M tokens (global inference)
+  - Ước tính 50 flashcard generations × avg 5K input + 2K output tokens = 250K in + 100K out
+  - Cost: **$0.75** + **$1.50** = **$2.25** cho 48h
+
+- **Tổng Bedrock cost 48h**: Haiku $0.40 + Sonnet Quiz $2.25 + Sonnet Flashcard $2.25 = **$4.90**
+
+- **So sánh vs Nova Lite cho tất cả 3 agents**: Nova Lite $0.04/$0.16 × 700K in + 240K out = **~$0.09** — rẻ hơn nhưng quality không đảm bảo cho quiz/flashcard structured generation.
 
 **EVIDENCE:**
 
-> **📸 Screenshot E1-a:** Chụp Bedrock console hiển thị model nova-lite-v1:0 được chọn trong Agent configuration.
+> **📸 Screenshot E1-a:** Chụp Bedrock Agent console cho `webapp-group10-mededu-chat-with-rag` hiển thị model `au.anthropic.claude-haiku-4-5`.
 >
-> File: `docs/evidence/nova_lite_agent_config.png`
+> File: `docs/evidence/agent_chat_haiku_config.png`
 >
-> **📸 Screenshot E1-b:** Chụp Cost Explorer breakdown hiển thị chi phí Bedrock Nova Lite.
+> **📸 Screenshot E1-b:** Chụp Bedrock Agent console cho `webapp-group10-mededu-generating-quizz` hiển thị model `global.anthropic.claude-sonnet-4-6`.
 >
-> File: `docs/evidence/bedrock_nova_cost.png`
+> File: `docs/evidence/agent_quiz_sonnet_config.png`
 >
-> **📸 Screenshot E1-c:** Chụp CloudWatch logs hoặc Postman test kết quả từ Nova Lite agent.
+> **📸 Screenshot E1-c:** Chụp Bedrock Agent console cho `webapp-group10-mededu-generating-flashcard` hiển thị model `global.anthropic.claude-sonnet-4-6`.
 >
-> File: `docs/evidence/nova_lite_response.png`
+> File: `docs/evidence/agent_flashcard_sonnet_config.png`
 
 **TRADE-OFF ACCEPTED:**
 
-- Nova Lite có training cutoff mới hơn so với Haiku — không đáng kể cho RAG use case.
-- Nova Lite không mạnh bằng Claude family trên complex reasoning tasks — nhưng quiz/flashcard generation là structured extraction từ retrieved chunks, không phải complex reasoning. Đây là use case phù hợp với Nova Lite.
-- Chúng tôi từ bỏ khả năng xử lý multi-turn conversation phức tạp của Sonnet để đổi lấy 25x cost savings. Cho demo hackathon, trade-off này là chấp nhận được.
-
+- **Haiku cho RAG chat** — từ bỏ khả năng xử lý multi-turn conversation phức tạp của Sonnet, nhưng RAG chat trong MedEdu là single-turn Q&A (hỏi đáp ngắn về nội dung tài liệu). Haiku đủ cho use case này với chi phí thấp hơn 15x.
+- **Sonnet cho quiz/flashcard** — chấp nhận chi phí cao hơn vì quality của structured output (đúng 4 lựa chọn, đáp án chính xác, giải thích ngắn gọn) là yêu cầu bắt buộc cho medical study tool. Không thể dùng model rẻ hơn nếu quiz toàn sai đáp án.
+- **Per-agent model strategy** — phức tạp hơn việc dùng 1 model, nhưng tối ưu cost/quality cho từng task. RAG chat chỉ cần Haiku, quiz/flashcard cần Sonnet.
 ---
 
 ### DECISION BLOCK 2: Chunking Strategy — Semantic vs Fixed-size cho Knowledge Base
