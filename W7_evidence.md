@@ -55,94 +55,10 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 
 ### 3.1 Sơ đồ kiến trúc
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                         BROWSER (Trainer / User)                     │
-│                   React 19 + Vite + Tailwind (FE)                   │
-│                                                                      │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │ WorkspacePage│  │  Dashboard   │  │  Auth Pages              │  │
-│  │ Tabs:       │  │              │  │  (Sign in / Sign up)     │  │
-│  │ - Summary   │  │              │  │                          │  │
-│  │ - Flashcards│  │              │  │                          │  │
-│  │ - Quiz     │  │              │  │                          │  │
-│  │ - Chat RAG │  │              │  │                          │  │
-│  └──────┬──────┘  └──────────────┘  └──────────────────────────┘  │
-└─────────┼───────────────────────────────────────────────────────────┘
-          │ HTTPS (CloudFront)
-          ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  AWS MANDATORY CAPABILITIES (layer by layer)                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌───────────────────────────────────────────────────────────────┐  │
-│  │ #1 EDGE / ENTRY — User-Facing HTTPS Entry                     │  │
-│  │   CloudFront (S3 static origin) — phục vụ FE tại *.cloudfront.net│ │
-│  │   API Gateway HTTP API — nhận AI/RAG/CRUD calls từ FE        │  │
-│  │   (2 vai trò riêng: static host = #1a, API entry = #1b)     │  │
-│  └────────────────────────────┬────────────────────────────────────┘  │
-│                                │                                     │
-│  ┌────────────────────────────▼────────────────────────────────────┐  │
-│  │ #2 APPLICATION COMPUTE — Backend Logic                         │  │
-│  │   FastAPI (Python 3.11) trên EC2 t3.micro — xử lý tất cả API│  │
-│  │   routes: auth, books, notes, quizzes, flashcards, AI, files│  │
-│  │   + n8n webhooks cho AI orchestration                         │  │
-│  └────────────────────────────┬────────────────────────────────────┘  │
-│                                │                                     │
-│  ┌────────────────────────────▼────────────────────────────────────┐  │
-│  │ #3 AI / ML FEATURE — Intelligent Capability                     │  │
-│  │   n8n workflow automation → Amazon Bedrock                     │  │
-│  │   ├── Chat RAG: Bedrock Claude Haiku + Titan Embeddings v2     │  │
-│  │   │   via Bedrock Knowledge Base (S3 Vectors vector store)   │  │
-│  │   ├── Quiz Generation: Bedrock InvokeModel (Haiku)             │  │
-│  │   ├── Flashcard Generation: Bedrock InvokeModel (Haiku)        │  │
-│  │   └── Summary Generation: Bedrock InvokeModel (Haiku)          │  │
-│  │   Marker Service: PDF → text extraction (prep for KB ingestion)│  │
-│  └────────────────────────────┬────────────────────────────────────┘  │
-│                                │                                     │
-│  ┌────────────────────────────▼────────────────────────────────────┐  │
-│  │ #4 DATA PERSISTENCE — User State Across Sessions               │  │
-│  │   PostgreSQL trên RDS db.t3.micro (single-AZ)                  │  │
-│  │   Tables: users, books, book_contents, notes, quizzes, flashcards│ │
-│  │   ORM: SQLAlchemy + Alembic migrations                          │  │
-│  │   (Persistence verified: viết Thu, đọc lại Fri demo)           │  │
-│  └────────────────────────────┬────────────────────────────────────┘  │
-│                                │                                     │
-│  ┌────────────────────────────▼────────────────────────────────────┐  │
-│  │ #5 OBJECT STORAGE — Files & Blobs                               │  │
-│  │   S3 Bucket (MedEdu-docs) — lưu trữ các file PDF đã upload     │  │
-│  │   ├── Block Public Access: ON                                   │  │
-│  │   ├── Versioning: enabled                                       │  │
-│  │   ├── SSE-KMS encryption với CMK (optional #10)                │  │
-│  │   └── KB source prefix: s3://mededu-docs/kb-source/            │  │
-│  └────────────────────────────┬────────────────────────────────────┘  │
-│                                │                                     │
-│  ┌────────────────────────────▼────────────────────────────────────┐  │
-│  │ #6 NETWORK FOUNDATION — VPC Isolation                           │  │
-│  │   VPC: MedEdu-VPC                                               │  │
-│  │   ├── Public Subnet: EC2 (FastAPI) + NAT Gateway (tạm thời)   │  │
-│  │   ├── Private Subnet: RDS PostgreSQL                            │  │
-│  │   ├── Security Group (EC2): port 8000 từ CloudFront SG only    │  │
-│  │   ├── Security Group (RDS): port 5432 từ EC2 SG only           │  │
-│  │   ├── S3 Gateway Endpoint (miễn phí)                            │  │
-│  │   └── Bedrock Interface Endpoint (private DNS, $0.013/hr)        │  │
-│  │   → DB KHÔNG public-facing (đã xác nhận trong console)          │  │
-│  └────────────────────────────┬────────────────────────────────────┘  │
-│                                │                                     │
-│  ┌────────────────────────────▼────────────────────────────────────┐  │
-│  │ #7 IDENTITY & ACCESS — IAM Least-Privilege                       │  │
-│  │   EC2 IAM Instance Profile: giới hạn cụ thể S3 bucket,          │  │
-│  │   RDS DB connect, Bedrock invoke only                           │  │
-│  │   Không có wildcard (*) trong bất kỳ policy nào                  │  │
-│  │   Tags trên mọi resource: Project=W7Capstone, Team=G<N>,        │  │
-│  │   Owner=<name>, Environment=hackathon                           │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-```
+<img width="1362" height="766" alt="image" src="https://github.com/user-attachments/assets/c2f49573-9a9c-4368-8956-8bbbb8690afd" />
 
-> **📸 Screenshot 3.1:** Chèn ảnh kiến trúc thực tế từ AWS Console / draw.io / Figma tại đây.
->
-> **Gợi ý chụp:** Architecture diagram từ draw.io, Lucidchart, hoặc ảnh chụp AWS Console VPC diagram. File đề xuất: `docs/evidence/architecture_diagram.png`
+
+> **Link to diagram: ** https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D
 
 ### 3.2 Bảng Service Decisions
 
