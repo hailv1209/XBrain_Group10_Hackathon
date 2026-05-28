@@ -749,6 +749,9 @@ Chi tiết đầy đủ tại **Phần 4. Cost Discipline** — bao gồm:
 
 VPC Flow Logs được bật trên toàn bộ VPC (`vpc-0b64a757960665b9a`) với `TrafficType: ALL`, ghi nhận mọi traffic flow (accept/reject) vào CloudWatch Log Group `webapp-group10-vpc-flow-log`. Mọi resources đều gắn tag `Team=G10`.
 
+<img width="1674" height="700" alt="image" src="https://github.com/user-attachments/assets/aaa2f10c-3aed-4dc9-8a8c-c9d43bce1569" />
+
+
 #### 9.3.2 Security Groups — Strictness
 
 Các Security Groups được cấu hình theo nguyên tắc **least privilege**:
