@@ -1,8 +1,6 @@
 # W7 Evidence Pack — Group 10, MedEdu (EduTech: AI Study Buddy)
 
 > **Hackathon:** W7 Capstone — Ship Production-Ready AI in 48 Hours
-> **Compiled:** Thứ Tư 28/5/2026 — Day 1 Build
-> **Status:** In-progress — các section sẽ được cập nhật bằng ảnh chụp thực tế sau khi deploy
 
 ---
 
@@ -20,7 +18,6 @@
 | **Tổng chi phí (tính đến hiện tại)** | $[—] — chụp ảnh Cost Explorer cuối Day 1 để điền |
 | **Pre-flight safety** | MFA trên root | Budget alert $80 | Cost Anomaly Detection  | Gắn tag | Bedrock access đã request |
 
-> **CẦN ĐIỀN (trước thứ Sáu):** Thay tất cả các chỗ `[—]` bằng giá trị thực từ AWS Console.
 
 ---
 
