@@ -94,13 +94,10 @@ Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M token
 
 ### 4.1 Cost Screenshots
 
-| Ảnh chụp | Thời điểm | Đường dẫn file |
-|----------|-----------|-----------------|
-| Day 1 EOD | Thứ Tư 28/5 cuối ngày | `docs/evidence/cost_day1_eod.png` |
-| Day 2 EOD | Thứ Năm 29/5 cuối ngày | `docs/evidence/cost_day2_eod.png` |
-| Friday pre-demo | Sáng thứ Sáu 30/5 | `docs/evidence/cost_friday_morning.png` |
 
-> **📸 Screenshot 4.1:** Sau khi chụp, điền đường dẫn thực tế vào bảng trên.
+<img width="975" height="385" alt="image" src="https://github.com/user-attachments/assets/a0363b0f-362a-4399-a38d-ddeea95f05f5" />
+<img width="975" height="249" alt="image" src="https://github.com/user-attachments/assets/1ec8f7a9-493a-4879-87af-9614882f64fc" />
+> **📸 Day 1 EOD:** Cost sau cuối ngày 1
 
 **Cách chụp Cost Explorer:**
 1. AWS Console → Cost Explorer
