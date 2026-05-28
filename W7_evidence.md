@@ -422,7 +422,7 @@ State: [OK / ALARM]
 Action: SNS → email đến team
 ```
 
-> **📸 Screenshot 6.2:** Chèn ảnh CloudWatch Alarm configuration và trạng thái tại đây.
+<img width="1550" height="743" alt="image" src="https://github.com/user-attachments/assets/96b4dc32-97ae-4d4b-816d-d9aad9536e7e" />
 >
 > File: `docs/evidence/cloudwatch_alarm.png`
 
