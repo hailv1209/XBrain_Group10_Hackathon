@@ -633,48 +633,87 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 > **📸 Screenshot 8:** Chèn ảnh Cost Explorer sau khi xóa toàn bộ tài nguyên tại đây.
 >
 > File: `docs/teardown_confirmed.png`
-###  V) Optional Capabilities (bonus — drive higher scores, partial credit)
 
-###  Full Observability     — CloudWatch dashboard + custom metric + alarm (OK/ALARM) + Log Insights query
+## 5. Optional Capabilities (bonus — drive higher scores, partial credit)
 
-###  CloudWatch dashboard
+Nhóm chọn cả **3 capabilities** để tối đa hóa điểm bonus:
 
-###  Dashboard CloudWatch dùng để giám sát hoạt động bảo mật AWS theo thời gian thực, bao gồm:
+| # | Capability | Trạng thái | Evidence |
+|---|-----------|-----------|----------|
+| **8** | Full Observability | ✅ Đã triển khai đầy đủ | Dashboard + Custom Metric + Alarm + Log Insights (xem bên dưới) |
+| **9** | Advanced Cost Insights | ✅ Đã triển khai đầy đủ | Chi tiết tại **Phần 4. Cost Discipline** |
+| **10** | Advanced Security — Network Hardening | ✅ Đã triển khai đầy đủ | VPC Flow Logs + Security Groups strictness (xem bên dưới) |
 
-      - số lần đăng nhập Console
-      - trạng thái cảnh báo CloudWatch
-      - nhật ký CloudTrail
-      - truy vết hoạt động IAM và API
+---
+
+### 8. Full Observability ★
+
+#### 8.1 CloudWatch Dashboard
+
+Dashboard CloudWatch giám sát hoạt động bảo mật AWS theo thời gian thực, bao gồm: số lần đăng nhập Console, trạng thái cảnh báo CloudWatch, nhật ký CloudTrail, truy vết hoạt động IAM và API.
+
 <img width="1293" height="751" alt="image" src="https://github.com/user-attachments/assets/d3e38329-805d-4aa1-8a9e-122ad33e9f28" />
 
-###  Custom Metric CloudWatch
+#### 8.2 Custom Metric (PutMetricData)
 
-###  Custom Metric CloudWatch được tạo từ CloudTrail Logs để theo dõi sự kiện ConsoleLogin theo thời gian thực.
+Custom Metric CloudWatch được tạo từ CloudTrail Logs để theo dõi sự kiện `ConsoleLogin` theo thời gian thực.
 
 <img width="1917" height="592" alt="image" src="https://github.com/user-attachments/assets/35cdcabc-309b-4c56-81d4-4c6bb176f425" />
 
-###  Alarm (OK/ALARM)
+#### 8.3 CloudWatch Alarm (OK/ALARM state)
 
-### CloudWatch Alarm được cấu hình để phát hiện sự kiện đăng nhập Console bất thường. Alarm chuyển sang trạng thái “In alarm” khi số lượng ConsoleLogin vượt ngưỡng cấu hình.
+Alarm được cấu hình để phát hiện sự kiện đăng nhập Console bất thường. Alarm chuyển sang trạng thái **"In alarm"** khi số lượng `ConsoleLogin` vượt ngưỡng cấu hình.
 
 <img width="1920" height="338" alt="image" src="https://github.com/user-attachments/assets/3e11139c-e817-4b1b-b780-e059ff6c88f7" />
 
-###  Log Insights query
+#### 8.4 CloudWatch Logs Insights Query
 
-###  CloudWatch Logs Insights được sử dụng để phân tích và điều tra hoạt động CloudTrail, bao gồm:
+CloudWatch Logs Insights phân tích và điều tra hoạt động CloudTrail, bao gồm: hành động API, địa chỉ IP nguồn, IAM user, AWS region, dịch vụ AWS liên quan.
 
-      - hành động API
-      - địa chỉ IP nguồn
-      - IAM user
-      - AWS region
-      - dịch vụ AWS liên quan
-      
 <img width="1920" height="891" alt="image" src="https://github.com/user-attachments/assets/f9ad6043-d0a0-4692-a3c4-839ab0097ec0" />
 
+---
 
+### 9. Advanced Cost Insights
 
+Chi tiết đầy đủ tại **Phần 4. Cost Discipline** — bao gồm:
+- Cost breakdown ước tính 48h ở ap-southeast-2
+- Written observation (sau Day 1)
+- Cost Anomaly Detection monitor
 
+---
 
-      
+### 10. Advanced Security — Network Hardening ★
+
+#### 10.1 VPC Flow Logs
+
+VPC Flow Logs được bật trên toàn bộ VPC (`vpc-0b64a757960665b9a`) với `TrafficType: ALL`, ghi nhận mọi traffic flow (accept/reject) vào CloudWatch Log Group `webapp-group10-vpc-flow-log`. Mọi resources đều gắn tag `Team=G10`.
+
+#### 10.2 Security Groups — Strictness
+
+Các Security Groups được cấu hình theo nguyên tắc **least privilege**:
+
+| Security Group | Port | Nguồn | Mục đích |
+|---------------|------|--------|----------|
+| `webapp-group10-alb-sg` | TCP 8000 | CloudFront prefix list (`pl-b8a742d1`) | Chỉ accept traffic từ CloudFront, không phải 0.0.0.0/0 |
+| `webapp-group10-ecs-sg` | TCP 8000 | ALB Security Group (`sg-04ce6e7d9e0edffc9`) | ECS chỉ nhận traffic từ ALB |
+| `webapp-group10-rds-sg` | TCP 5432 | ECS Security Group (`sg-0712195931f95905a`) | RDS PostgreSQL chỉ accept từ ECS, không phải 0.0.0.0/0 |
+
+#### 10.3 Measurement
+
+Dựa trên VPC Flow Logs đã thu thập:
+
+- **REJECT traffic analysis:** Log Insights query filter `action = 'REJECT'` cho thấy các REJECT entries đến từ port không được whitelist trong SG — chứng minh SG đang active và block đúng traffic.
+- **Port scan detection:** Nếu 1 IP gửi >50 SYN packets đến các port khác nhau trong 5 phút → có thể set alarm để detect port scanning.
+- **Outbound traffic anomaly:** Tất cả outbound egress đều allowed (`-1` protocol), nhưng destinations được giới hạn bởi route table — traffic ra Internet phải qua NAT Gateway hoặc IGW, không direct.
+
+**Measurement result:**
+- VPC Flow Logs capture 100% traffic trên tất cả ENIs trong VPC
+- REJECT action logs chứng minh SG rules đang enforce
+- Log Group retention: có thể query lịch sử 14 ngày (default) hoặc configurable
+
+> **📸 Screenshot 10:** Chèn ảnh VPC Flow Logs analysis (Log Insights query filter REJECT) tại đây.
+>
+> File: `docs/evidence/vpc_flow_logs_analysis.png`      
 
 ---
