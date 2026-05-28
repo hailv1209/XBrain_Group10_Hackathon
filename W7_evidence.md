@@ -242,17 +242,19 @@ Dựa trên CloudFormation template, nhóm đã implement các security features
 - **RDS:** Encrypted = true, KMS Key = `arn:aws:kms:ap-southeast-2:493499579600:key/281a9f1a-d25f-4330-a264-c5a5565caea4`
 - **S3 Buckets:** SSE-S3 (AES256), BucketKey enabled
 
-> **📸 Screenshot 5.3B:** Chụp RDS console hiển thị encryption enabled + KMS key.
->
-> File: `docs/evidence/rds_encryption.png`
+<img width="1891" height="733" alt="image" src="https://github.com/user-attachments/assets/92890c84-e3c6-4428-b8f6-238c79279528" />
+
+> **📸 Screenshot 5.3B:**  RDS console hiển thị encryption enabled + KMS key.
+
 
 #### Audit Trail
 
 - **CloudTrail:** Multi-region management events trail, log file validation enabled, logs stored in dedicated S3 bucket
 
-> **📸 Screenshot 5.3C:** Chụp CloudTrail event history hoặc S3 bucket chứa trail logs.
->
-> File: `docs/evidence/cloudtrail_logs_bucket.png`
+<img width="1909" height="525" alt="image" src="https://github.com/user-attachments/assets/accece14-b759-48b9-b83d-18a1f4fc8157" />
+
+> **📸 Screenshot 5.3C:** S3 bucket chứa trail logs.
+
 
 ---
 
