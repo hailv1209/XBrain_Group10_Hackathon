@@ -70,12 +70,12 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 | 1a | Static UI Hosting | CloudFront + S3 | HTTPS trên custom domain `aws.hungtran.id.vn` qua CloudFront. S3 là origin. Block Public Access bật. Không cần ACM riêng vì dùng HTTPS của CloudFront. |
 | 1b | API Entry | ALB (Application Load Balancer) | ALB nhận traffic từ CloudFront prefix list và forward đến ECS Fargate tasks qua port 8000. Stateful app (FastAPI + SQLAlchemy) cần connection persistence — ALB hỗ trợ tốt hơn Lambda Function URL. |
 | 2 | Application Compute | ECS Fargate | FastAPI backend chạy trên Fargate thay vì EC2 vì: không cần quản lý instance, tự động scale theo request, tính phí theo vCPU-Giây sử dụng (phù hợp cho hackathon 48h). ECS IAM Task Role cho phép gán quyền scoped. |
-| 3 | AI/ML Feature | Bedrock Agents + Knowledge Base + Guardrail | 3 Agents riêng cho 3 chức năng (chat RAG, quiz, flashcard) mỗi agent gắn Knowledge Base. Nova Lite v1 được chọn cho chi phí thấp và hỗ trợ đa phương thức. Guardrail bảo vệ nội dung phù hợp cho môi trường giáo dục y khoa. |
+| 3 | AI/ML Feature | Bedrock Agents + Knowledge Base + Guardrail | 3 Agents riêng cho 3 chức năng (chat RAG, quiz, flashcard) mỗi agent gắn Knowledge Base. Chat RAG dùng **Claude Haiku** (au.anthropic.claude-haiku-4-5) cho Q&A ngắn gọn, tiết kiệm chi phí. Quiz và Flashcard Generator dùng **Claude Sonnet 4** (global.anthropic.claude-sonnet-4-6) cho structured generation đúng format. Guardrail bảo vệ nội dung phù hợp cho môi trường giáo dục y khoa. |
 | 4 | Data Persistence | RDS PostgreSQL db.t3.micro (single-AZ) | Data model MedEdu là quan hệ (users → books → contents → quizzes → flashcards). SQLAlchemy ORM đã xây dựng sẵn. Single-AZ vì Multi-AZ gấp đôi chi phí, không có giá trị demo. Neptune (graph DB) để thử nghiệm truy vấn quan hệ phức tạp giữa các thực thể. |
 | 5 | Object Storage | S3 Standard (3 buckets) | Frontend bucket, data-source bucket (KB), supplemental bucket. Tất cả bật Block Public Access và SSE-S3 encryption. OwnershipControls: BucketOwnerEnforced. |
 | 6 | Network Foundation | VPC 3-tier (public + private DB) + NAT GW + SG references | Public subnets cho ALB + ECS + NAT GW. Private subnets (2 AZ) cho RDS + Neptune. SG của RDS chỉ accept TCP 5432 từ ECS SG (không phải 0.0.0.0/0). VPC Flow Logs gửi logs đến CloudWatch. |
 | 7 | Identity & Access | IAM execution roles (Bedrock Agents + ECS Task Role) | Mỗi Bedrock Agent có dedicated IAM role với chỉ các actions cần thiết. ECS Task Role chỉ được phép: S3 trên 3 bucket cụ thể, RDS connect, Bedrock invoke. Không wildcard. CloudTrail ghi management events. |
-| — | Optional #8/9/10 | [Điền sau khi quyết định Day 2] | [Lý do quyết định] |
+| — | Optional #8 / #9 / #10 | Full Observability + Advanced Cost Insights + Advanced Security | **#8 Full Observability:** VPC Flow Logs (ALL traffic → CloudWatch Log Group `webapp-group10-vpc-flow-log`) + CloudTrail multi-region (`webapp-group10-management-events` → S3 bucket + CloudWatch Log Group `/cloudtrail/group10`) + AWS Config auto-fix S3 (`Config-auto-fix-for-s3` giám sát public access). **#9 Advanced Cost Insights:** Cost Explorer filter `Team=G10` + Budget Alert $80 + Cost Anomaly Detection. **#10 Advanced Security:** Bedrock Guardrail `webapp-group10-guardrail` (content filters VIOLENCE/HATE/SEXUAL/INSULTS/MISCONDUCT HIGH + profanity BLOCK + contextual grounding 0.85/0.65) gắn cả 3 agents; RDS encrypted với KMS CMK `arn:aws:kms:ap-southeast-2:493499579600:key/281a9f1a-d25f-4330-a264-c5a5565caea4`; CloudTrail enable log file validation; DeletionProtection=true trên RDS. |
 
 ### 3.3 Trade-offs (2-3 quyết định có suy nghĩ đã được ghi nhận)
 
@@ -83,9 +83,9 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 
 Chúng tôi chọn **ECS Fargate** thay vì EC2 vì FastAPI backend được containerize sẵn, Fargate không yêu cầu quản lý EC2 instance (no SSH, no patching, no scaling groups), và tính phí theo resource thực sử dụng (0.04048 USD/vCPU-giây trong ap-southeast-2). Với hackathon 48h, Fargate cho phép deploy nhanh hơn. Trade-off: Fargate có cold start latency cao hơn EC2 nếu task bị terminate — nhưng ECS Service giữ task luôn running.
 
-**Trade-off 2: amazon.nova-lite-v1:0 vs Claude 3.5 Haiku cho AI agents**
+**Trade-off 2: Per-agent model selection (Haiku cho chat, Sonnet 4 cho quiz/flashcard)**
 
-Chúng tôi chọn **Nova Lite** vì chi phí thấp hơn đáng kể so với Claude family ($0.04/1M input vs Haiku $1.00/1M), hỗ trợ multimodal input (text + image), và native Bedrock integration. NeoPixel (Nova family) được đánh giá tốt cho các tác vụ text generation cơ bản. Xem Phần 6.5 cho benchmark chi tiết.
+Chúng tôi chọn **per-agent model strategy** — Haiku cho RAG chat, Sonnet 4 cho quiz và flashcard — thay vì dùng 1 model cho tất cả. RAG chat chỉ cần trả lời ngắn 1-2 câu từ retrieved chunks, Haiku đủ khả năng với chi phí thấp hơn 15x so với Sonnet. Quiz và flashcard generation đòi hỏi structured output chính xác (4 lựa chọn, đáp án đúng, giải thích ngắn) — Sonnet 4 vượt trội rõ rệt ở structured generation so với Haiku. Chi phí chênh lệch chỉ ảnh hưởng đến quiz/flashcard (số lượng hạn chế trong 48h), không phải RAG chat (frequency cao nhưng mỗi call rất rẻ với Haiku).
 
 **Trade-off 3: Semantic Chunking vs Fixed-size Chunking cho Knowledge Base**
 
