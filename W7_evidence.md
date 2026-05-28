@@ -347,22 +347,62 @@ Dựa trên CloudFormation template, nhóm đã implement các security features
 
 ### 6.1 CloudWatch Dashboard
 
-> **CẦN TẠO (Day 2):** Tạo dashboard với ít nhất 3 widgets. Chụp ảnh → `docs/evidence/cloudwatch_dashboard.png`
+<img width="1879" height="748" alt="image" src="https://github.com/user-attachments/assets/29b9e1fc-4196-4dad-b655-26b43e7eefa4" />
 
-**Các widget được khuyến nghị:**
-1. **ECS Fargate**: CPUUtilization, MemoryUtilization, RunningTaskCount
-2. **ALB**: ActiveConnectionCount, TargetResponseTime, HTTPCode_Target_5XX_Count
-3. **RDS PostgreSQL**: DatabaseConnections, CPUUtilization, FreeStorageSpace
-4. **Custom metric**: số request AI qua ECS, publish qua `PutMetricData`
+> **Full dashboard:**
 
-> **📸 Screenshot 6.1:** Chèn ảnh CloudWatch Dashboard tại đây.
+**Các widget đã tạo:**
+
+| Dashboard | Widget | Metrics | Mục đích |
+|-----------|--------|---------|----------|
+| **ECS & ALB Monitoring** | ECS CPU & Memory | ContainerMemoryUtilized, ContainerMemoryUtilization | Theo dõi tài nguyên container |
+| **ECS & ALB Monitoring** | ALB Traffic | RequestCount, TargetResponseTime | Giám sát lưu lượng & hiệu năng |
+| **Security Monitoring** | ConsoleLoginCount | Số lần đăng nhập AWS Console | Phát hiện đăng nhập bất thường |
+| **Security Monitoring** | CloudTrail Alarm Status | Trạng thái alarm | Giám sát sự kiện bảo mật |
+| **Security Monitoring** | CloudTrail Log Stream | API events, IP, Region | Audit hoạt động AWS |
+
+---
+
+<img width="1891" height="355" alt="image" src="https://github.com/user-attachments/assets/8d683ac2-2d20-4254-9707-5454fe6680eb" />
+
+> **📸 Screenshot 6.1a:** ECS & ALB Monitoring Dashboard
 >
-> **Gợi ý tạo:**
-> 1. AWS Console → CloudWatch → Dashboards → Create dashboard
-> 2. Thêm widgets cho: ECS metrics, ALB metrics, RDS metrics
-> 3. Chụp ảnh dashboard sau khi tạo
+> Dashboard giám sát hiệu năng hệ thống tập trung vào ECS và Application Load Balancer:
 >
-> File: `docs/evidence/cloudwatch_dashboard.png`
+> **ECS CPU & Memory Monitoring:**
+> - Widget theo dõi `ContainerMemoryUtilized` (~97 MiB) và `ContainerMemoryUtilization` (~4-5%)
+> - Memory utilization ở mức thấp → container còn nhiều tài nguyên khả dụng, hệ thống ổn định
+>
+> **ALB Traffic Metrics:**
+> - Widget theo dõi `RequestCount` và `TargetResponseTime`
+> - Lưu lượng thay đổi theo thời gian với các spike nhỏ
+> - Không có độ trễ lớn, backend phản hồi ổn định dù traffic tăng
+>
+> **Lợi ích:** Xác định peak traffic, theo dõi hiệu năng backend, phát hiện bottleneck sớm.
+
+---
+
+<img width="1900" height="601" alt="image" src="https://github.com/user-attachments/assets/42fe5bd2-7b29-45ae-8c1d-a016888724c7" />
+
+> **📸 Screenshot 6.1b:** Security Monitoring Dashboard
+>
+> Dashboard giám sát bảo mật sử dụng CloudWatch kết hợp CloudTrail:
+>
+> **ConsoleLoginCount:**
+> - Theo dõi số lần đăng nhập AWS Console
+> - Biểu đồ cho thấy spike đăng nhập vào ~08:00 UTC, các thời điểm khác gần như không có hoạt động
+> - Hỗ trợ phát hiện đăng nhập bất thường
+>
+> **CloudTrail Alarm Status:**
+> - Trạng thái alarm màu xanh → hoạt động bình thường
+> - Chưa phát hiện sự kiện bất thường hoặc vi phạm ngưỡng
+>
+> **CloudTrail Log Stream:**
+> - Ghi nhận các API events: thời gian, action, IP address, region
+> - Một số action ghi nhận: `ListContainers`, `DescribeLoadBalancers`, `GetRestApis`, `ListChannelGroups`
+>
+> **Lợi ích:** Audit hoạt động AWS, giám sát truy cập, phát hiện truy cập trái phép, phục vụ security compliance.
+
 
 ---
 
