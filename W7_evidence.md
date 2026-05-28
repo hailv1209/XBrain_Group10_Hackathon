@@ -97,6 +97,7 @@ Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M token
 
 <img width="975" height="385" alt="image" src="https://github.com/user-attachments/assets/a0363b0f-362a-4399-a38d-ddeea95f05f5" />
 <img width="975" height="249" alt="image" src="https://github.com/user-attachments/assets/1ec8f7a9-493a-4879-87af-9614882f64fc" />
+
 > **📸 Day 1 EOD:** Cost sau cuối ngày 1
 
 **Cách chụp Cost Explorer:**
