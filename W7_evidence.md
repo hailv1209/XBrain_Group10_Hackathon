@@ -413,7 +413,7 @@ Dựa trên CloudFormation template, nhóm đã implement các security features
 
 > **CẦN TẠO (Day 2):** Tạo ít nhất 1 alarm. Alarm phải ở trạng thái OK hoặc ALARM (không phải INSUFFICIENT_DATA).
 
-**Ví dụ alarm:**
+<img width="1550" height="743" alt="image" src="https://github.com/user-attachments/assets/96b4dc32-97ae-4d4b-816d-d9aad9536e7e" />
 
 ```
 Alarm Name: CloudTrail-ConsoleLogin-Alarm
@@ -423,10 +423,15 @@ State: OK
 Action: SNS → email đến team
 ```
 
-<img width="1550" height="743" alt="image" src="https://github.com/user-attachments/assets/96b4dc32-97ae-4d4b-816d-d9aad9536e7e" />
->
-> File: `docs/evidence/cloudwatch_alarm.png`
+<img width="1567" height="646" alt="image" src="https://github.com/user-attachments/assets/54478f88-1ab3-4ae7-b7b4-176205304d1f" />
 
+```
+Alarm Name: G10-ALB-5XX-Errors
+Metric: HTTPCode_Target_5XX_Count
+Threshold: > 0 lỗi trong chu kỳ 5 phút (`> 0 for 1 datapoints within 5 minutes`)
+State: OK
+Action: SNS → email đến team
+```
 ---
 
 ### 6.3 Log Insights Query
