@@ -609,15 +609,20 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 >
 > File: `docs/teardown_confirmed.png`
 ###  V) Optional Capabilities (bonus — drive higher scores, partial credit)
+
 ###  Full Observability     — CloudWatch dashboard + custom metric + alarm (OK/ALARM) + Log Insights query
+
 ###  CloudWatch dashboard
+
 ###  Dashboard CloudWatch dùng để giám sát hoạt động bảo mật AWS theo thời gian thực, bao gồm:
+
       - số lần đăng nhập Console
       - trạng thái cảnh báo CloudWatch
       - nhật ký CloudTrail
       - truy vết hoạt động IAM và API
 <img width="1293" height="751" alt="image" src="https://github.com/user-attachments/assets/d3e38329-805d-4aa1-8a9e-122ad33e9f28" />
 ###  Custom Metric CloudWatch
+
 ###  Custom Metric CloudWatch được tạo từ CloudTrail Logs để theo dõi sự kiện ConsoleLogin theo thời gian thực.
 <img width="1917" height="592" alt="image" src="https://github.com/user-attachments/assets/35cdcabc-309b-4c56-81d4-4c6bb176f425" />
 ###  Alarm (OK/ALARM)
