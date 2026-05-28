@@ -615,9 +615,6 @@ Bedrock Knowledge Base default parser chỉ trích xuất plain text từ docume
 
 Đây là trade-off lớn: để có multimodal parsing (giữ images + tables), team cần upgrade lên premium Bedrock Data Automation hoặc dùng third-party parser như Amazon Textract + custom preprocessing. Với free tier, team chấp nhận trade-off này cho MVP.
 
-**3. Neptune không có trong final stack.**
-Neptune (graph DB) được dự định cho truy vấn quan hệ phức tạp giữa users → books → contents → quizzes → flashcards. Tuy nhiên, PostgreSQL + SQLAlchemy ORM đã xử lý được mọi relationship queries cần thiết cho MVP. Neptune thêm complexity mà không mang lại giá trị tương xứng cho demo hackathon.
-
 ---
 
 ### Real-world parallel
