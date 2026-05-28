@@ -510,17 +510,17 @@ fields @timestamp, @message
 
 <img width="1191" height="597" alt="image" src="https://github.com/user-attachments/assets/ba516e2d-f3ab-4a51-b748-b88f22d26104" />
 
-> **📸 Screenshot E1-a:** Chụp Bedrock Agent console cho `webapp-group10-mededu-chat-with-rag` hiển thị model `au.anthropic.claude-haiku-4-5`.
+> **📸 Screenshot E1-a:** `webapp-group10-mededu-chat-with-rag` hiển thị model `au.anthropic.claude-haiku-4-5`.
 
 
 <img width="1160" height="570" alt="image" src="https://github.com/user-attachments/assets/ac51ca64-de93-4238-8af4-587106c39f6c" />
 
-> **📸 Screenshot E1-b:** Chụp Bedrock Agent console cho `webapp-group10-mededu-generating-quizz` hiển thị model `global.anthropic.claude-sonnet-4-6`.
+> **📸 Screenshot E1-b:**  `webapp-group10-mededu-generating-quizz` hiển thị model `global.anthropic.claude-sonnet-4-6`.
 
 
 <img width="1176" height="564" alt="image" src="https://github.com/user-attachments/assets/f1abcbbb-96d0-4db6-9778-c79efec852b5" />
 
-> **📸 Screenshot E1-c:** Chụp Bedrock Agent console cho `webapp-group10-mededu-generating-flashcard` hiển thị model `global.anthropic.claude-sonnet-4-6`.
+> **📸 Screenshot E1-c:** `webapp-group10-mededu-generating-flashcard` hiển thị model `global.anthropic.claude-sonnet-4-6`.
 
 
 **TRADE-OFF ACCEPTED:**
