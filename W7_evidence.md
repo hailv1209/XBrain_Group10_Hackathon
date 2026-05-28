@@ -58,7 +58,7 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 <img width="1362" height="766" alt="image" src="https://github.com/user-attachments/assets/c2f49573-9a9c-4368-8956-8bbbb8690afd" />
 
 
-> **Link to diagram: ** https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D
+> **Link to diagram: ** [https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D](https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D)
 
 ### 3.2 Bảng Service Decisions
 
