@@ -743,16 +743,71 @@ Chi tiết đầy đủ tại **Phần 4. Cost Discipline** — bao gồm:
 
 ---
 
-### 9.3 Advanced Security — Network Hardening
+### 9.3 Advanced Security
 
-#### 9.3.1 VPC Flow Logs
+#### 9.3.1 Audit
+
+##### CloudTrail Trail
+CloudTrail ghi nhận tất cả management events và API calls trên AWS account. Trail `webapp-group10-management-events` được cấu hình multi-region, gửi logs đến S3 bucket `webapp-group10-management-cloudtrail-logs-bucket` và CloudWatch Log Group `/cloudtrail/group10`. Log file validation được bật để detect any tampering với log files.
+
+<img width="1914" height="1071" alt="image" src="https://github.com/user-attachments/assets/25c22df5-1b6b-42d2-aa6d-39538dca7f63" />
+
+##### AWS Config
+AWS Config giám sát resource configuration changes liên tục. Config rule `s3-account-level-public-access-blocks` kiểm tra tất cả S3 buckets trong account đều bật Block Public Access — đảm bảo không có bucket nào vô tình expose dữ liệu ra Internet. Role `Config-auto-fix-for-s3` được setup để auto-remediate khi phát hiện violation.
+
+<img width="2038" height="1023" alt="image" src="https://github.com/user-attachments/assets/7f0b33f6-037b-42bc-91d3-5c4df5aa08bc" />
+
+**Config Rule: s3-account-level-public-access-blocks**
+
+Rule kiểm tra compliance status của tất cả S3 buckets:
+
+- **COMPLIANT**: Bucket có Block Public Access enabled — không truy cập public được
+- **NON_COMPLIANT**: Bucket không có Block Public Access — có nguy cơ data exposure
+  
+<img width="2045" height="465" alt="image" src="https://github.com/user-attachments/assets/abab741b-bff2-424a-80b7-eed82be08caa" />
+<img width="1743" height="876" alt="image" src="https://github.com/user-attachments/assets/8a41c372-741a-4428-98d5-58caf9302942" />
+<img width="1738" height="277" alt="image" src="https://github.com/user-attachments/assets/4ffd1e0b-545e-400b-9265-a793c4b37a10" />
+
+**Rule Remediation**
+
+Khi Config phát hiện violation, auto-remediation tự động apply `s3:PutAccountPublicAccessBlock` lên bucket không compliant — giảm manual effort và đảm bảo security posture được restore nhanh chóng.
+<img width="1738" height="952" alt="image" src="https://github.com/user-attachments/assets/1cd2e69a-c83a-4209-85d0-6c13e9c0e948" />
+
+##### CloudTrail Trail
+
+CloudTrail ghi nhận tất cả management events và API calls trên AWS account. Trail `webapp-group10-management-events` được cấu hình multi-region, gửi logs đến S3 bucket `webapp-group10-management-cloudtrail-logs-bucket` và CloudWatch Log Group `/cloudtrail/group10`. Log file validation được bật để detect any tampering với log files.
+<img width="2041" height="732" alt="image" src="https://github.com/user-attachments/assets/6f041540-56c9-445c-844c-e344cc59ea1e" />
+
+
+##### Security Hub
+
+Security Hub tổng hợp security findings từ multiple AWS services (Config, GuardDuty, Inspector, Macie) vào 1 dashboard thống nhất. Security Hub phân loại findings theo severity (CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL) và compliance standards (AWS Foundational Security Best Practices). Team có thể view all security posture in one place thay vì check từng service riêng lẻ.
+
+<img width="2046" height="1028" alt="image" src="https://github.com/user-attachments/assets/02b2600d-294b-452b-b642-3f5457ad59b0" />
+
+##### GuardDuty
+
+GuardDuty sử dụng machine learning và threat intelligence để phát hiện anomalous behavior trên AWS environment. GuardDuty continuously analyzes VPC Flow Logs, CloudTrail events, DNS logs — phát hiện các threats như: compromised EC2 instances mining crypto, credential access attacks, data exfiltration attempts. Findings được centralized trong Security Hub để team có thể triage nhanh.
+
+<img width="2047" height="981" alt="image" src="https://github.com/user-attachments/assets/d1b447a9-891c-4829-a080-2dc453bfd4fc" />
+
+##### Inspector
+
+Amazon Inspector đánh giá security posture của EC2 instances và container images bằng cách scan for known vulnerabilities (CVEs) và network exposure. Inspector tự động assess các targets (ECS tasks) và trả về severity-scored findings — giúp team ưu tiên patching dựa trên risk level.
+
+<img width="2045" height="1027" alt="image" src="https://github.com/user-attachments/assets/61fec73f-5853-4543-a9b8-a4151e737e3a" />
+
+
+#### 9.3.2 Network
+
+##### VPC Flow Logs
 
 VPC Flow Logs được bật trên toàn bộ VPC (`vpc-0b64a757960665b9a`) với `TrafficType: ALL`, ghi nhận mọi traffic flow (accept/reject) vào CloudWatch Log Group `webapp-group10-vpc-flow-log`. Mọi resources đều gắn tag `Team=G10`.
 
 <img width="1674" height="700" alt="image" src="https://github.com/user-attachments/assets/aaa2f10c-3aed-4dc9-8a8c-c9d43bce1569" />
 
 
-#### 9.3.2 Security Groups — Strictness
+##### Security Groups — Strictness
 
 Các Security Groups được cấu hình theo nguyên tắc **least privilege**:
 
@@ -762,7 +817,7 @@ Các Security Groups được cấu hình theo nguyên tắc **least privilege**
 | `webapp-group10-ecs-sg` | TCP 8000 | ALB Security Group (`sg-04ce6e7d9e0edffc9`) | ECS chỉ nhận traffic từ ALB |
 | `webapp-group10-rds-sg` | TCP 5432 | ECS Security Group (`sg-0712195931f95905a`) | RDS PostgreSQL chỉ accept từ ECS, không phải 0.0.0.0/0 |
 
-#### 9.3.3 Measurement
+##### Measurement
 
 Dựa trên VPC Flow Logs đã thu thập:
 
