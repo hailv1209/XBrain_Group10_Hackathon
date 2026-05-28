@@ -540,7 +540,7 @@ fields @timestamp, @message
 >
 > **📸 Screenshot E2-b:** Chụp S3 bucket data-source sau khi ingest PDFs, hiển thị chunked documents.
 >
-> File: `docs/evidence/s3_kb_chunks.png`
+> File: <img width="1555" height="662" alt="image" src="https://github.com/user-attachments/assets/b5f6d36f-054f-40f3-b766-c0489759f5ec" />
 >
 > **📸 Screenshot E2-c:** Chụp 5 probe questions + RAG answers để đo retrieval quality.
 >
