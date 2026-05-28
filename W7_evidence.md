@@ -536,11 +536,11 @@ fields @timestamp, @message
 
 > Bedrock Knowledge Base console hiển thị chunking configuration (SEMANTIC, 300 tokens, 95% breakpoint).
 >
-> File: <img width="835" height="387" alt="image" src="https://github.com/user-attachments/assets/cd55fc31-e032-4401-9477-6c62e7f7acfc" />
+> <img width="835" height="387" alt="image" src="https://github.com/user-attachments/assets/cd55fc31-e032-4401-9477-6c62e7f7acfc" />
 >
 > S3 bucket data-source sau khi ingest PDFs, hiển thị chunked documents.
 >
-> File: <img width="1555" height="662" alt="image" src="https://github.com/user-attachments/assets/b5f6d36f-054f-40f3-b766-c0489759f5ec" />
+> <img width="1555" height="662" alt="image" src="https://github.com/user-attachments/assets/b5f6d36f-054f-40f3-b766-c0489759f5ec" />
 >
 > **📸 Screenshot E2-c:** Chụp 5 probe questions + RAG answers để đo retrieval quality.
 >
