@@ -89,8 +89,8 @@ Bọn em quyết định chọn **ECS Fargate** thay vì EC2 truyền thống v�
 
 Thay vì dùng một model duy nhất cho mọi tính năng, bọn em triển khai **chiến lược Per-agent Model** để tối ưu hóa giữa hiệu năng và chi phí:
 
-* **Claude 3 Haiku cho RAG Chat:** Nhiệm vụ này chỉ cần trả lời ngắn gọn dựa trên dữ liệu truy xuất. Haiku đáp ứng rất tốt với tốc độ cực nhanh và chi phí rẻ hơn tới 15 lần so với Sonnet.
-* **Claude 3.5 Sonnet cho Quiz/Flashcard:** Việc tạo câu hỏi trắc nghiệm đòi hỏi cấu hình đầu ra (Structured Output) cực kỳ chính xác (4 lựa chọn, đáp án đúng, giải thích). Sonnet vượt trội hoàn toàn ở khả năng này, giúp tránh lỗi format so với Haiku.
+* **Claude 4.5 Haiku cho RAG Chat:** Nhiệm vụ này chỉ cần trả lời ngắn gọn dựa trên dữ liệu truy xuất. Haiku đáp ứng rất tốt với tốc độ cực nhanh và chi phí rẻ hơn tới 15 lần so với Sonnet.
+* **Claude 4.6 Sonnet cho Quiz/Flashcard:** Việc tạo câu hỏi trắc nghiệm đòi hỏi cấu hình đầu ra (Structured Output) cực kỳ chính xác (4 lựa chọn, đáp án đúng, giải thích). Sonnet vượt trội hoàn toàn ở khả năng này, giúp tránh lỗi format so với Haiku.
 * **Hiệu quả:** Cách tiếp cận này giúp bọn em kiểm soát chi phí hiệu quả vì các tác vụ "nặng" như Quiz chỉ chiếm số lượng ít, trong khi RAG Chat có tần suất cao lại được xử lý rất tiết kiệm.
 
 ---
