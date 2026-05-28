@@ -573,25 +573,70 @@ fields @timestamp, @message
 
 ## 7. Lessons Learned
 
-> **CẦN ĐIỀN:** Viết 200 từ tham chiếu đến real-world parallel và một concrete failure case. Cập nhật sau Day 2.
+---
 
-*Hướng dẫn viết:*
+### Điều gì đã làm tốt
 
-**Điều gì đã làm tốt:**
-> [Ví dụ: CloudFormation export giúp tái deploy nhanh, architecture sign-off meeting hiệu quả, team parallelization hoạt động tốt]
+**1. CloudFormation-as-code từ day 0.**
+Template YAML định nghĩa toàn bộ infra (VPC, RDS, ECS, Bedrock Agents, S3 buckets, IAM roles, Security Groups, Guardrail) trong 1 file. Khi cần tái deploy hoặc team member vô tình xóa resources, chỉ cần chạy `aws cloudformation deploy` — toàn bộ stack tái tạo trong vài phút. Đặc biệt quan trọng khi 10 thành viên làm việc song song trên các phần khác nhau.
 
-**Điều gì bạn sẽ làm khác đi:**
-> [Ví dụ: Enable Bedrock model access từ prep day, benchmark Nova Lite vs Haiku trước khi commit]
+**2. Per-agent model selection (Haiku cho chat RAG, Sonnet 4 cho quiz/flashcard).**
+Thay vì dùng 1 model duy nhất, team chọn model phù hợp với workload. RAG chat chỉ cần trả lời ngắn từ retrieved chunks — Haiku đủ với chi phí thấp hơn 15x. Quiz và flashcard cần structured output chính xác — Sonnet 4 vượt trội ở đây.
 
-**Điều gì gây bất ngờ:**
-> [Ví dụ: Neptune không cần thiết cho MVP, NAT Gateway cost cao hơn dự kiến, Guardrail cần configure riêng cho medical content]
+**3. Security Groups least-privilege từ thiết kế.**
+RDS chỉ accept TCP 5432 từ ECS SG, ALB chỉ accept từ CloudFront prefix list. Đúng từ đầu, tránh retrofit security sau — vốn tốn công và dễ miss edge cases.
 
-**Real-world parallel:**
-> "Nếu một kỹ sư Khanmigo / Quizlet AI xem xét hệ thống của chúng tôi, họ sẽ ngay lập tức chỉ ra [specific gap cụ thể]"
+---
 
-**Concrete failure case:**
-> "[Specific thing that broke] và chính xác cách chúng tôi sửa nó"
+### Điều gì bạn sẽ làm khác đi
 
+**1. Enable Bedrock model access từ prep day, không phải trong hackathon.**
+Model cần được grant explicit access trước khi agent invoke được. IAM + model grant có thể mất 30-60 phút. Nếu enable từ prep day, team không mất thời gian chờ trong 48h countdown.
+
+**2. Benchmark embedding model quality trước khi commit vào Knowledge Base.**
+Free tier giới hạn embedding model, nhưng team không đo lường trước impact của embedding quality lên RAG retrieval accuracy. Cần test với sample medical documents (chứa bảng, hình ảnh, flowchart) để đánh giá retrieval precision trước khi quyết định model cuối cùng.
+
+**3. Pin Guardrail version cụ thể thay vì dùng DRAFT.**
+Template dùng `GuardrailVersion: "DRAFT"` — không stable giữa các lần deploy. Cần chọn 1 specific version (ví dụ `v1`) sau khi test Guardrail filter với medical content và commit version đó vào template.
+
+---
+
+### Điều gì gây bất ngờ
+
+**1. Free tier là rào cản lớn nhất với RAG quality.**
+Account free tier chỉ cho phép sử dụng embedding model tier thấp nhất trong Bedrock Knowledge Base. Điều này ảnh hưởng trực tiếp đến semantic search quality — documents được embed với độ chính xác thấp hơn, dẫn đến retrieval có thể miss relevant chunks hoặc trả về noisy results. Đây là constraint mà team không anticipate đầy đủ khi thiết kế RAG pipeline.
+
+**2. Default parser chỉ parse text — mất hoàn toàn hình ảnh, bảng, và cấu trúc tài liệu.**
+Bedrock Knowledge Base default parser chỉ trích xuất plain text từ documents. Medical textbooks thường chứa:
+- **Hình ảnh** (anatomy diagrams, X-ray, microscopy): không được parse → AI không thể "nhìn thấy" diagram để tạo quiz/flashcard
+- **Bảng biểu** (drug dosage table, lab values): không được parse → mất critical structured data
+- **Cấu trúc headings** (H1/H2/H3): không được preserve → context hierarchy bị phẳng hóa
+- **Footnote/caption**: không được parse → mất reference information
+
+Đây là trade-off lớn: để có multimodal parsing (giữ images + tables), team cần upgrade lên premium Bedrock Data Automation hoặc dùng third-party parser như Amazon Textract + custom preprocessing. Với free tier, team chấp nhận trade-off này cho MVP.
+
+**3. Neptune không có trong final stack.**
+Neptune (graph DB) được dự định cho truy vấn quan hệ phức tạp giữa users → books → contents → quizzes → flashcards. Tuy nhiên, PostgreSQL + SQLAlchemy ORM đã xử lý được mọi relationship queries cần thiết cho MVP. Neptune thêm complexity mà không mang lại giá trị tương xứng cho demo hackathon.
+
+---
+
+### Real-world parallel
+
+> *"Nếu một kỹ sư Khanmigo / Quizlet AI xem xét hệ thống của chúng tôi, họ sẽ ngay lập tức chỉ ra 2 vấn đề nghiêm trọng: Thứ nhất, KB parsing chỉ parse text — một diagram về cơ chế tim co bóp sẽ bị mất hoàn toàn trong vector store, nghĩa là quiz về cardiac cycle không thể hỏi 'Mô tả quá trình...' vì diagram gốc đã không được embed. Thứ hai, embedding quality bị giới hạn bởi free tier khiến retrieval precision thấp — câu hỏi về 'side effects của beta-blocker' có thể trả về chunk về 'alpha-blocker' vì semantic similarity không đủ chính xác. Trong production, Khanmigo dùng proprietary document understanding pipeline giữ được cả text + visual + structure — đây là architectural gap lớn nhất cần giải quyết."*
+
+---
+
+### Concrete failure case
+
+> **RAG retrieval trả về sai chunk vì embedding quality thấp trên free tier.**
+>
+> **Vấn đề:** Khi user hỏi "Tác dụng phụ của Aspirin là gì?", chatbot trả về thông tin về "Ibuprofen" — sai thuốc nhưng cùng nhóm NSAIDs. Nguyên nhân: embedding model free tier có vector representation không đủ discriminative giữa các drugs trong cùng nhóm. Chunk về Ibuprofen có similarity score cao hơn chunk về Aspirin vì cả hai chứa overlapping vocabulary ("pain relief", "anti-inflammatory", "side effect").
+>
+> **Cách sửa tạm thời:** Thêm step post-retrieval verification trong prompt — yêu cầu agent kiểm tra tên drug trong retrieved chunk khớp với tên drug trong câu hỏi trước khi trả lời.
+>
+> **Cách sửa triệt để (cần upgrade):** Upgrade lên embedding model tier cao hơn (Titan Embedding v2 hoặc Cohere Embed) hoặc implement hybrid search (BM25 keyword matching + vector similarity) để boost retrieval precision.
+>
+> **Lesson:** Trong RAG systems, embedding model quality là yếu tố quyết định retrieval accuracy — không thể xem nhẹ, đặc biệt với medical content có terminology chồng chéo cao.
 ---
 
 ## 8. Teardown Plan
