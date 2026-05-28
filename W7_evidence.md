@@ -1,4 +1,4 @@
-# W7 Evidence Pack — Group 10, MedEdu (EduTech: AI Study Buddy)
+<img width="1152" height="648" alt="image" src="https://github.com/user-attachments/assets/7eac0458-f408-42f1-8dd0-235bc4970732" /># W7 Evidence Pack — Group 10, MedEdu (EduTech: AI Study Buddy)
 
 > **Hackathon:** W7 Capstone — Ship Production-Ready AI in 48 Hours
 > **Compiled:** Thứ Tư 28/5/2026 — Day 1 Build
@@ -531,7 +531,8 @@ fields @timestamp, @message
 
 > **📸 Screenshot E2-a:** Chụp Bedrock Knowledge Base console hiển thị chunking configuration (SEMANTIC, 300 tokens, 95% breakpoint).
 >
-> File: `docs/evidence/kb_chunking_config.png`
+> File: `<img width="1152" height="648" alt="image" src="https://github.com/user-attachments/assets/1ae4ee5e-3c03-4896-9c6e-3677606b11f2" />
+`
 >
 > **📸 Screenshot E2-b:** Chụp S3 bucket data-source sau khi ingest PDFs, hiển thị chunked documents.
 >
