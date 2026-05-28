@@ -165,11 +165,27 @@ Dựa trên kiến trúc CloudFormation và ước tính 48h sử dụng ở `ap
 
 Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí, dựa trên ML, set alert cho bất kỳ spike chi phí bất thường nào.
 
-> **📸 Screenshot 4.4:** Chụp ảnh Cost Anomaly Detection monitor từ AWS Console.
->
-> **Gợi ý chụp:** AWS Console → Cost Management → Cost Anomaly Detection → Monitor đã tạo
->
-> File: `docs/evidence/cost_anomaly_detection.png`
+### Monitor Information
+
+| Field | Value |
+|---|---|
+| Monitor Name | `Webapp-Group10-Services-Monitor` |
+| Monitor Type | AWS Services |
+| Monitoring Scope | All AWS Services |
+| Monitor ARN | `arn:aws:ce::493499579600:anomalymonitor/a94dee3e-055a-465e-bcf8-c1d85935b867` |
+| Alert Subscriptions | `FinanceGroup10` |
+| Managed By | AWS |
+
+**Ảnh Chụp Bằng Chứng cấu hình:**
+
+<img width="1566" height="733" alt="image" src="https://github.com/user-attachments/assets/81a32633-41d7-4819-b05b-22b53e1f0e94" />
+<img width="1540" height="358" alt="image" src="https://github.com/user-attachments/assets/cf27a211-0496-487c-b3dd-e5d8cfc4d6b8" />
+
+
+**Ảnh Chụp Bằng Chứng Detected anomalies:**
+
+<img width="1547" height="619" alt="image" src="https://github.com/user-attachments/assets/2d9a0cb0-49fe-4e92-9488-a8e8ecdf2636" />
+
 
 ---
 
