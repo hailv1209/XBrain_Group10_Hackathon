@@ -414,7 +414,7 @@ fields @timestamp, @message
 
 ---
 
-## 6.5 Measurement & Decisions ★
+## 6.5 Measurement & Decisions 
 
 > **ANTI-DỐI PHÓ NOTICE:** Phần này được yêu cầu và chấm điểm. Các câu mơ hồ như "chúng tôi chọn Bedrock, nó hoạt động" sẽ được 0 điểm. Mỗi block phải có con số cụ thể, các alternatives đã xem xét với lý do loại trừ, evidence links, và trade-offs đã được đặt tên. Hai blocks mạnh đánh bại sáu blocks yếu.
 
