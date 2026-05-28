@@ -608,5 +608,34 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 > **📸 Screenshot 8:** Chèn ảnh Cost Explorer sau khi xóa toàn bộ tài nguyên tại đây.
 >
 > File: `docs/teardown_confirmed.png`
+###  V) Optional Capabilities (bonus — drive higher scores, partial credit)
+###  Full Observability     — CloudWatch dashboard + custom metric + alarm (OK/ALARM) + Log Insights query
+###  CloudWatch dashboard
+###  Dashboard CloudWatch dùng để giám sát hoạt động bảo mật AWS theo thời gian thực, bao gồm:
+      - số lần đăng nhập Console
+      - trạng thái cảnh báo CloudWatch
+      - nhật ký CloudTrail
+      - truy vết hoạt động IAM và API
+      <img width="1293" height="751" alt="image" src="https://github.com/user-attachments/assets/d3e38329-805d-4aa1-8a9e-122ad33e9f28" />
+###  Custom Metric CloudWatch
+###  Custom Metric CloudWatch được tạo từ CloudTrail Logs để theo dõi sự kiện ConsoleLogin theo thời gian thực.
+      <img width="1917" height="592" alt="image" src="https://github.com/user-attachments/assets/35cdcabc-309b-4c56-81d4-4c6bb176f425" />
+###  Alarm (OK/ALARM)
+### CloudWatch Alarm được cấu hình để phát hiện sự kiện đăng nhập Console bất thường. Alarm chuyển sang trạng thái “In alarm” khi số lượng ConsoleLogin vượt ngưỡng cấu hình.
+      <img width="1920" height="338" alt="image" src="https://github.com/user-attachments/assets/3e11139c-e817-4b1b-b780-e059ff6c88f7" />
+###  Log Insights query
+###  CloudWatch Logs Insights được sử dụng để phân tích và điều tra hoạt động CloudTrail, bao gồm:
+      - hành động API
+      - địa chỉ IP nguồn
+      - IAM user
+      - AWS region
+      - dịch vụ AWS liên quan
+      <img width="1920" height="891" alt="image" src="https://github.com/user-attachments/assets/f9ad6043-d0a0-4692-a3c4-839ab0097ec0" />
+
+
+
+
+
+      
 
 ---
