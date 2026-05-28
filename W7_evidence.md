@@ -1,20 +1,18 @@
 # W7 Evidence Pack — Team Water, MedEdu (EduTech: AI Study Buddy)
 
 > **Hackathon:** W7 Capstone — Ship Production-Ready AI in 48 Hours
-> **Compiled:** Thứ Tư 28/5/2026 — Day 1 Build
-> **Status:** In-progress — các section sẽ được cập nhật bằng ảnh chụp thực tế sau khi deploy
 
 ---
 
-## §1. Cover
+## 1. Cover
 
 | Trường | Giá trị |
 |--------|---------|
-| **Nhóm** | Team Water (G — số nhóm) |
+| **Nhóm** | Team Water (G10) |
 | **Domain** | EduTech: "AI Study Buddy" — MedEdu |
-| **Thành viên** | [Tên thành viên 1], [Tên thành viên 2], [Tên thành viên 3] |
-| **Live URL** | https://[your-cloudfront-domain].cloudfront.net |
-| **Repo** | https://github.com/[your-org]/W7-MedEdu |
+| **Thành viên** | Lê Trần Tuấn Khanh, Trần Mạnh Trường, Trần Mạnh Cường, Nguyễn Đức Hảo, Lê Văn Hải, Phan Đức Huy, Lê Viết Quốc Hưng, Huỳnh Xuân Hậu, Nguyễn Thị Mến, Trần Quốc Hùng |
+| **Live URL** | https://aws.hungtran.id.vn/ |
+| **Repo** | https://github.com/orgs/aws-g10/repositories |
 | **Optional capability đã chọn** | [Full Observability #8 / Advanced Cost Insights #9 / Advanced Security #10 / Không làm] |
 | **Tổng chi phí (tính đến hiện tại)** | $[—] — chụp ảnh Cost Explorer cuối Day 1 để điền |
 | **Pre-flight safety** | MFA trên root ✅ | Budget alert $80 ✅ | Cost Anomaly Detection ✅ | Gắn tag ✅ | Bedrock access đã request ✅ |
@@ -23,7 +21,7 @@
 
 ---
 
-## §2. Pitch and Vision
+## 2. Pitch and Vision
 
 ### Use Case
 
@@ -49,13 +47,13 @@ MedEdu giải quyết bằng cách tự động hóa quy trình tạo tài liệ
 
 ### Real-World Parallel
 
-MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự động), **Google NotebookLM** (hỏi đáp dựa trên tài liệu), và **Khan Academy's Khanmigo** (trợ lý học tập AI cá nhân hóa). Một kỹ sư Khanmigo xem xét hệ thống của chúng tôi sẽ ngay lập tức hỏi: *"Làm thế nào để RAG của bạn thực sự truy xuất đúng chunks, và các bạn đo lường chất lượng truy xuất như thế nào?"* Chúng tôi giải quyết vấn đề này trong §6.5.
+MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự động), **Google NotebookLM** (hỏi đáp dựa trên tài liệu), và **Khan Academy's Khanmigo** (trợ lý học tập AI cá nhân hóa). Một kỹ sư Khanmigo xem xét hệ thống của chúng tôi sẽ ngay lập tức hỏi: *"Làm thế nào để RAG của bạn thực sự truy xuất đúng chunks, và các bạn đo lường chất lượng truy xuất như thế nào?"* Chúng tôi giải quyết vấn đề này trong Phần 6.5.
 
 ---
 
-## §3. Architecture
+## 3. Architecture
 
-### §3.1 Sơ đồ kiến trúc
+### 3.1 Sơ đồ kiến trúc
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -142,25 +140,25 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-> **📸 Screenshot §3.1:** Chèn ảnh kiến trúc thực tế từ AWS Console / draw.io / Figma tại đây.
+> **📸 Screenshot 3.1:** Chèn ảnh kiến trúc thực tế từ AWS Console / draw.io / Figma tại đây.
 >
 > **Gợi ý chụp:** Architecture diagram từ draw.io, Lucidchart, hoặc ảnh chụp AWS Console VPC diagram. File đề xuất: `docs/evidence/architecture_diagram.png`
 
-### §3.2 Bảng Service Decisions
+### 3.2 Bảng Service Decisions
 
 | # | Capability | Service Đã Chọn | Tại Sao Chọn Cái Này, Không Phải Cái Khác |
 |---|-----------|-----------------|-------------------------------------------|
 | 1a | Static UI Hosting | CloudFront + S3 | HTTPS trên `*.cloudfront.net` miễn phí — không cần setup ACM cert. S3 static hosting làm origin. |
 | 1b | API Entry | API Gateway HTTP API | Rẻ hơn REST API ($1/M vs $3.50/M), đủ cho request volume của chúng tôi, tích hợp IAM để validate auth. |
 | 2 | Application Compute | EC2 t3.micro (FastAPI) | Chúng tôi đã xây dựng FastAPI backend với SQLAlchemy synchronous — chạy trên EC2 tránh được việc refactor code sang async handler model cho Lambda. t3.micro free-tier (750 giờ đầu tiên mỗi tháng). Chấp nhận rủi ro quản lý instance vì hackathon 48h với codebase có sẵn thì đây là con đường nhanh hơn. |
-| 3 | AI/ML Feature | Bedrock Claude 3.5 Haiku + Bedrock Knowledge Base + n8n | RAG trên tài liệu đã upload là core AI feature. Haiku được chọn sau khi so sánh chi phí/chất lượng (xem §6.5). n8n orchestrate AI webhooks cho quiz/flashcard/summary generation tách biệt với RAG chat. |
+| 3 | AI/ML Feature | Bedrock Claude 3.5 Haiku + Bedrock Knowledge Base + n8n | RAG trên tài liệu đã upload là core AI feature. Haiku được chọn sau khi so sánh chi phí/chất lượng (xem Phần 6.5). n8n orchestrate AI webhooks cho quiz/flashcard/summary generation tách biệt với RAG chat. |
 | 4 | Data Persistence | RDS PostgreSQL db.t3.micro (single-AZ) | Data model của chúng tôi là quan hệ (users → books → contents, quizzes, flashcards). SQLAlchemy ORM đã xây dựng sẵn. Multi-AZ gấp đôi chi phí ($0.026 → $0.052/hr ở Singapore) nhưng không có giá trị demo trong hackathon 48h — single-AZ là trade-off đúng. |
 | 5 | Object Storage | S3 Standard | Lưu trữ PDF uploads và KB source. Standard tier là rẻ nhất và đủ dùng. Block Public Access đã bật. |
 | 6 | Network Foundation | VPC với private subnets + SGs + VPC Endpoints | DB nằm trong private subnet với SG tham chiếu đến EC2 SG (không phải CIDR). NAT Gateway tạm thời cho setup ban đầu — thay bằng VPC Interface Endpoint cho Bedrock để tránh phí NAT Gateway $1.08/ngày. |
 | 7 | Identity & Access | IAM instance profile (EC2) với scoped actions | FastAPI trên EC2 dùng instance profile (không cần key dài hạn). IAM role chỉ cho phép: `s3:GetObject/PutObject` trên bucket ARN của chúng tôi, `bedrock:InvokeModel` trên model đã chọn, `rds-db:connect` trên DB của chúng tôi. |
 | — | Optional #8/9/10 | [Điền sau khi quyết định Day 2] | [Lý do quyết định] |
 
-### §3.3 Trade-offs (2-3 quyết định có suy nghĩ đã được ghi nhận)
+### 3.3 Trade-offs (2-3 quyết định có suy nghĩ đã được ghi nhận)
 
 **Trade-off 1: EC2 vs Lambda cho application compute**
 
@@ -172,13 +170,13 @@ Chúng tôi chọn **single-AZ** vì Multi-AZ gấp đôi chi phí ($0.026 → $
 
 **Trade-off 3: Bedrock Claude Haiku vs Sonnet**
 
-Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M tokens) thay vì Sonnet ($3.00/$15.00) sau khi benchmark song song trên 10 sample quiz-generation prompts. Chất lượng không khác biệt đáng kể cho task tạo câu hỏi ngắn có cấu trúc. Haiku rẻ hơn 3x mỗi lần gọi — xem §6.5 đầy đủ.
+Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M tokens) thay vì Sonnet ($3.00/$15.00) sau khi benchmark song song trên 10 sample quiz-generation prompts. Chất lượng không khác biệt đáng kể cho task tạo câu hỏi ngắn có cấu trúc. Haiku rẻ hơn 3x mỗi lần gọi — xem Phần 6.5 đầy đủ.
 
 ---
 
-## §4. Cost Discipline
+## 4. Cost Discipline
 
-### §4.1 Cost Screenshots
+### 4.1 Cost Screenshots
 
 | Ảnh chụp | Thời điểm | Đường dẫn file |
 |----------|-----------|-----------------|
@@ -186,7 +184,7 @@ Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M token
 | Day 2 EOD | Thứ Năm 29/5 cuối ngày | `docs/evidence/cost_day2_eod.png` |
 | Friday pre-demo | Sáng thứ Sáu 30/5 | `docs/evidence/cost_friday_morning.png` |
 
-> **📸 Screenshot §4.1:** Sau khi chụp, điền đường dẫn thực tế vào bảng trên.
+> **📸 Screenshot 4.1:** Sau khi chụp, điền đường dẫn thực tế vào bảng trên.
 
 **Cách chụp Cost Explorer:**
 1. AWS Console → Cost Explorer
@@ -197,7 +195,7 @@ Chúng tôi chọn **Claude 3.5 Haiku** ($1.00 input / $5.00 output per 1M token
 
 ---
 
-### §4.2 Cost Breakdown (Ước tính — thay bằng dữ liệu thực tế sau khi deploy)
+### 4.2 Cost Breakdown (Ước tính — thay bằng dữ liệu thực tế sau khi deploy)
 
 Dựa trên kiến trúc và ước tính 48h sử dụng ở `ap-southeast-1`:
 
@@ -216,15 +214,15 @@ Dựa trên kiến trúc và ước tính 48h sử dụng ở `ap-southeast-1`:
 | **TỔNG ƯỚC TÍNH** | | **~$3.00** |
 | **% của $100 cap** | | **~3%** |
 
-> **📸 Screenshot §4.2:** Chèn ảnh Cost Explorer breakdown theo service tại đây.
+> **📸 Screenshot 4.2:** Chèn ảnh Cost Explorer breakdown theo service tại đây.
 >
 > **Gợi ý chụp:** Cost Explorer → Cost and Usage → Group by: Service → Date range: 48h period
 
 ---
 
-### §4.3 Written Observation
+### 4.3 Written Observation
 
-> **📸 Screenshot §4.3:** Chèn ảnh Cost Explorer cho phần observation tại đây.
+> **📸 Screenshot 4.3:** Chèn ảnh Cost Explorer cho phần observation tại đây.
 
 > **CẦN ĐIỀN (sau Day 1):** Viết observation thực tế từ Cost Explorer.
 >
@@ -251,11 +249,11 @@ Dựa trên kiến trúc và ước tính 48h sử dụng ở `ap-southeast-1`:
 
 ---
 
-### §4.4 Cost Anomaly Detection
+### 4.4 Cost Anomaly Detection
 
 Cost Anomaly Detection monitor đã tạo ở account level vào sáng thứ Tư. Service miễn phí, dựa trên ML, set alert cho bất kỳ spike chi phí bất thường nào.
 
-> **📸 Screenshot §4.4:** Chụp ảnh Cost Anomaly Detection monitor từ AWS Console.
+> **📸 Screenshot 4.4:** Chụp ảnh Cost Anomaly Detection monitor từ AWS Console.
 >
 > **Gợi ý chụp:** AWS Console → Cost Management → Cost Anomaly Detection → Monitor đã tạo → chi tiết monitor
 >
@@ -263,13 +261,13 @@ Cost Anomaly Detection monitor đã tạo ở account level vào sáng thứ Tư
 
 ---
 
-## §5. Security
+## 5. Security
 
-### §5.1 IAM Roles và Execution Role Scope (Mandatory #7)
+### 5.1 IAM Roles và Execution Role Scope (Mandatory #7)
 
 **EC2 Instance Profile Role:** `MedEdu-EC2-Role`
 
-> **📸 Screenshot §5.1a:** Chụp ảnh IAM role policy từ AWS Console.
+> **📸 Screenshot 5.1a:** Chụp ảnh IAM role policy từ AWS Console.
 >
 > **Gợi ý chụp:** IAM Console → Roles → `MedEdu-EC2-Role` → Permissions tab → policy document
 >
@@ -324,17 +322,17 @@ Cost Anomaly Detection monitor đã tạo ở account level vào sáng thứ Tư
 }
 ```
 
-### §5.2 MFA on Root Account
+### 5.2 MFA on Root Account
 
 MFA device đã cấu hình trên AWS root account. Root credentials được lưu trữ bảo mật. IAM users đã được tạo cho mỗi thành viên với quyền phù hợp.
 
-> **📸 Screenshot §5.2:** Chụp ảnh MFA đã enabled trên root account.
+> **📸 Screenshot 5.2:** Chụp ảnh MFA đã enabled trên root account.
 >
 > **Gợi ý chụp:** AWS Console → Account → Security credentials → MFA on root account → trạng thái "MFA is enabled"
 >
 > File: `docs/evidence/mfa_root_enabled.png`
 
-### §5.3 Optional #10 Security Area (nếu thực hiện)
+### 5.3 Optional #10 Security Area (nếu thực hiện)
 
 > **CẦN CHỌN:** Chọn MỘT area và document với bằng chứng cụ thể.
 
@@ -346,10 +344,10 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 - Áp dụng cho: S3 bucket (server-side encryption), RDS (at-rest encryption via CMK)
 - Key rotation: enabled (tự động rotation mỗi năm)
 
-> **📸 Screenshot §5.3A-1:** Chụp KMS console hiển thị key rotation status = "Enabled"
+> **📸 Screenshot 5.3A-1:** Chụp KMS console hiển thị key rotation status = "Enabled"
 > File: `docs/evidence/kms_key_rotation.png`
 >
-> **📸 Screenshot §5.3A-2:** Chụp S3 bucket properties hiển thị SSE-KMS với CMK ARN
+> **📸 Screenshot 5.3A-2:** Chụp S3 bucket properties hiển thị SSE-KMS với CMK ARN
 > File: `docs/evidence/s3_kms_encryption.png`
 
 ---
@@ -359,10 +357,10 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 - Database credentials lưu trong Parameter Store (`/mededu/db_password`) với SecureString
 - Không có hardcoded secrets trong code hoặc `.env` đã commit lên repo
 
-> **📸 Screenshot §5.3B-1:** Chụp Parameter Store console hiển thị `/mededu/db_password` với loại SecureString
+> **📸 Screenshot 5.3B-1:** Chụp Parameter Store console hiển thị `/mededu/db_password` với loại SecureString
 > File: `docs/evidence/parameter_store_secrets.png`
 >
-> **📸 Screenshot §5.3B-2:** Chụp `.env.example` file (không có giá trị thực) trong repo
+> **📸 Screenshot 5.3B-2:** Chụp `.env.example` file (không có giá trị thực) trong repo
 > File: `docs/evidence/env_example.png`
 
 ---
@@ -372,17 +370,17 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 - WAF Web ACL gắn vào CloudFront: rate-based rule chặn >1000 requests/phút/IP
 - VPC Flow Logs: enabled trên VPC, log vào CloudWatch Log Group
 
-> **📸 Screenshot §5.3C-1:** Chụp WAF Web ACL console với rule đã configure
+> **📸 Screenshot 5.3C-1:** Chụp WAF Web ACL console với rule đã configure
 > File: `docs/evidence/waf_web_acl.png`
 >
-> **📸 Screenshot §5.3C-2:** Chụp VPC Flow Logs configuration hoặc CloudWatch Logs Insights query kết quả
+> **📸 Screenshot 5.3C-2:** Chụp VPC Flow Logs configuration hoặc CloudWatch Logs Insights query kết quả
 > File: `docs/evidence/vpc_flow_logs.png`
 
 ---
 
-## §6. Monitoring
+## 6. Monitoring
 
-### §6.1 CloudWatch Dashboard
+### 6.1 CloudWatch Dashboard
 
 > **CẦN TẠO (Day 2):** Tạo dashboard với ít nhất 3 widgets. Chụp ảnh → `docs/evidence/cloudwatch_dashboard.png`
 
@@ -392,7 +390,7 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 3. **Custom metric**: `MedEdu/AIRequests` — published qua `PutMetricData` từ FastAPI mỗi lần gọi AI
 4. **S3**: NumberOfObjects, BucketSizeBytes
 
-> **📸 Screenshot §6.1:** Chèn ảnh CloudWatch Dashboard tại đây.
+> **📸 Screenshot 6.1:** Chèn ảnh CloudWatch Dashboard tại đây.
 >
 > **Gợi ý tạo:**
 > 1. AWS Console → CloudWatch → Dashboards → Create dashboard
@@ -403,7 +401,7 @@ MFA device đã cấu hình trên AWS root account. Root credentials được l�
 
 ---
 
-### §6.2 CloudWatch Alarm
+### 6.2 CloudWatch Alarm
 
 > **CẦN TẠO (Day 2):** Tạo ít nhất 1 alarm. Alarm phải ở trạng thái OK hoặc ALARM (không phải INSUFFICIENT_DATA).
 
@@ -417,7 +415,7 @@ State: OK (không có errors tính đến Thursday 16:00)
 Action: SNS → email đến team
 ```
 
-> **📸 Screenshot §6.2:** Chèn ảnh CloudWatch Alarm configuration và trạng thái tại đây.
+> **📸 Screenshot 6.2:** Chèn ảnh CloudWatch Alarm configuration và trạng thái tại đây.
 >
 > **Gợi ý tạo:**
 > 1. AWS Console → CloudWatch → Alarms → Create alarm
@@ -429,7 +427,7 @@ Action: SNS → email đến team
 
 ---
 
-### §6.3 Log Insights Query
+### 6.3 Log Insights Query
 
 > **CẦN TẠO VÀ LƯU (Day 2):** Lưu một Log Insights query. Chụp ảnh → `docs/evidence/log_insights_query.png`
 
@@ -444,7 +442,7 @@ fields @timestamp, @message
 
 Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 
-> **📸 Screenshot §6.3:** Chèn ảnh saved Log Insights query với kết quả thực tại đây.
+> **📸 Screenshot 6.3:** Chèn ảnh saved Log Insights query với kết quả thực tại đây.
 >
 > **Gợi ý tạo:**
 > 1. AWS Console → CloudWatch → Logs → Log Insights
@@ -456,7 +454,7 @@ Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 
 ---
 
-## §6.5 Measurement & Decisions ★
+## 6.5 Measurement & Decisions ★
 
 > **ANTI-DỐI PHÓ NOTICE:** Phần này được yêu cầu và chấm điểm. Các câu mơ hồ như "chúng tôi chọn Bedrock, nó hoạt động" sẽ được 0 điểm. Mỗi block phải có con số cụ thể, các alternatives đã xem xét với lý do loại trừ, evidence links, và trade-offs đã được đặt tên. Hai blocks mạnh đánh bại sáu blocks yếu.
 
@@ -493,7 +491,7 @@ Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 >
 > File: `docs/evidence/haiku_latency_cloudwatch.png`
 >
-> **📸 Screenshot E1-c:** Cost Explorer Day 1 EOD (đã chụp ở §4)
+> **📸 Screenshot E1-c:** Cost Explorer Day 1 EOD (đã chụp ở Phần 4)
 >
 > File: `docs/evidence/cost_day1_eod.png`
 
@@ -549,7 +547,7 @@ Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 
 ---
 
-## §7. Lessons Learned
+## 7. Lessons Learned
 
 > **CẦN ĐIỀN:** Viết 200 từ tham chiếu đến real-world parallel và một concrete failure case. Cập nhật sau Day 2.
 
@@ -572,7 +570,7 @@ Saved query name: `MedEdu-ErrorFilter-Last1Hour`
 
 ---
 
-## §8. Teardown Plan
+## 8. Teardown Plan
 
 > **Deadline: Sunday 1/6/2026 EOD**
 
@@ -614,7 +612,7 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 - Tổng chi phí hiển thị cho hackathon period
 - Không có charges mới đang accruing
 
-> **📸 Screenshot §8:** Chèn ảnh Cost Explorer sau khi xóa toàn bộ tài nguyên tại đây.
+> **📸 Screenshot 8:** Chèn ảnh Cost Explorer sau khi xóa toàn bộ tài nguyên tại đây.
 >
 > File: `docs/teardown_confirmed.png`
 
@@ -645,18 +643,18 @@ Sau tất cả deletions, kiểm tra trong Cost Explorer:
 
 ## Checklist — Trước Demo Day
 
-- [ ] §1: Điền tên thật của members, group number, live URL, repo link
-- [ ] §1: Điền total spend sau Day 1 EOD
-- [ ] §4.1: Chụp và gắn 3 cost screenshots (Day 1, Day 2, Friday)
-- [ ] §4.2: Thay breakdown ước tính bằng chi phí thực từ Cost Explorer
-- [ ] §4.3: Viết written observation thực tế
-- [ ] §4.4: Chụp Cost Anomaly Detection monitor
-- [ ] §5.1: Chụp IAM role policy screenshot
-- [ ] §5.2: Chụp MFA root account
-- [ ] §5.3: Chọn và gắn screenshot cho ONE optional security area
-- [ ] §6.1: Tạo và chụp CloudWatch dashboard
-- [ ] §6.2: Tạo alarm (OK/ALARM state) và chụp
-- [ ] §6.3: Lưu Log Insights query và chụp
-- [ ] §6.5: Điền tất cả screenshot paths cho 2 decision blocks
-- [ ] §7: Viết Lessons Learned thực tế (200 từ)
-- [ ] §8: Teardown toàn bộ tài nguyên, chụp confirmation
+- [ ] Phần 1: Điền tên thật của members, group number, live URL, repo link
+- [ ] Phần 1: Điền total spend sau Day 1 EOD
+- [ ] Phần 4.1: Chụp và gắn 3 cost screenshots (Day 1, Day 2, Friday)
+- [ ] Phần 4.2: Thay breakdown ước tính bằng chi phí thực từ Cost Explorer
+- [ ] Phần 4.3: Viết written observation thực tế
+- [ ] Phần 4.4: Chụp Cost Anomaly Detection monitor
+- [ ] Phần 5.1: Chụp IAM role policy screenshot
+- [ ] Phần 5.2: Chụp MFA root account
+- [ ] Phần 5.3: Chọn và gắn screenshot cho ONE optional security area
+- [ ] Phần 6.1: Tạo và chụp CloudWatch dashboard
+- [ ] Phần 6.2: Tạo alarm (OK/ALARM state) và chụp
+- [ ] Phần 6.3: Lưu Log Insights query và chụp
+- [ ] Phần 6.5: Điền tất cả screenshot paths cho 2 decision blocks
+- [ ] Phần 7: Viết Lessons Learned thực tế (200 từ)
+- [ ] Phần 8: Teardown toàn bộ tài nguyên, chụp confirmation
