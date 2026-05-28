@@ -225,6 +225,7 @@ Dựa trên CloudFormation template, nhóm đã implement các security features
 #### Bedrock Guardrail — Content Safety
 
 <img width="1423" height="744" alt="image" src="https://github.com/user-attachments/assets/b314ab15-7184-4eb4-a29d-7e63c90e9361" />
+
 > **📸 Screenshot 5.3A:** Bedrock Guardrail console từ AWS Console.
 
 
