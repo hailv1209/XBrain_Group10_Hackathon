@@ -706,7 +706,7 @@ Nhóm chọn cả **3 capabilities** để tối đa hóa điểm bonus:
 
 ---
 
-### 9.1. Full Observability ★
+### 9.1. Full Observability
 
 #### 9.1.1 CloudWatch Dashboard
 
