@@ -184,8 +184,7 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 
 <img width="1524" height="478" alt="image" src="https://github.com/user-attachments/assets/4f0c4f44-9ea0-44b5-b420-fc46f991f8aa" />
 
->
-> File: `docs/evidence/ecs_task_role_policy.png`
+> aiRelatedFeaturePermissions
 ```
 {
     "Version": "2012-10-17",
@@ -232,6 +231,41 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
                 "s3:DeleteObject"
             ],
             "Resource": "arn:aws:s3:::webapp-group10-data-source/*"
+        }
+    ]
+}
+```
+> enablePsExec
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowECSExecSSMMessages",
+            "Effect": "Allow",
+            "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+> putMetric
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CloudWatchPutMetrics",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:PutMetricData"
+            ],
+            "Resource": "*"
         }
     ]
 }
