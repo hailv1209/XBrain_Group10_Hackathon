@@ -76,18 +76,31 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 
 ### 3.3 Trade-offs (2-3 quyết định có suy nghĩ đã được ghi nhận)
 
-**Trade-off 1: ECS Fargate vs EC2 cho application compute**
+### **Trade-off 1: ECS Fargate vs EC2 cho Application Compute**
 
-Chúng tôi chọn **ECS Fargate** thay vì EC2 vì FastAPI backend được containerize sẵn, Fargate không yêu cầu quản lý EC2 instance (no SSH, no patching, no scaling groups), và tính phí theo resource thực sử dụng (0.04048 USD/vCPU-giây trong ap-southeast-2). Với hackathon 48h, Fargate cho phép deploy nhanh hơn. Trade-off: Fargate có cold start latency cao hơn EC2 nếu task bị terminate — nhưng ECS Service giữ task luôn running.
+Bọn em quyết định chọn **ECS Fargate** thay vì EC2 truyền thống vì backend FastAPI đã được container hóa hoàn chỉnh. Với Fargate, bọn em không cần tốn thời gian quản lý hạ tầng (không phải lo SSH, patching hay cấu hình Auto Scaling Groups), giúp cả đội tập trung tối đa vào việc phát triển tính năng trong 48h ngắn ngủi.
 
-**Trade-off 2: Per-agent model selection (Haiku cho chat, Sonnet 4 cho quiz/flashcard)**
+* **Lợi ích:** Tính phí linh hoạt theo resource thực tế sử dụng (0.04048 USD/vCPU-giờ tại ap-southeast-2), rất tối ưu cho quy mô hackathon.
+* **Đánh đổi:** Fargate có độ trễ cold start cao hơn EC2 nếu task bị terminate, nhưng bọn em đã xử lý bằng cách cấu hình ECS Service để giữ task luôn ở trạng thái **Running**, đảm bảo trải nghiệm người dùng không bị gián đoạn.
 
-Chúng tôi chọn **per-agent model strategy** — Haiku cho RAG chat, Sonnet 4 cho quiz và flashcard — thay vì dùng 1 model cho tất cả. RAG chat chỉ cần trả lời ngắn 1-2 câu từ retrieved chunks, Haiku đủ khả năng với chi phí thấp hơn 15x so với Sonnet. Quiz và flashcard generation đòi hỏi structured output chính xác (4 lựa chọn, đáp án đúng, giải thích ngắn) — Sonnet 4 vượt trội rõ rệt ở structured generation so với Haiku. Chi phí chênh lệch chỉ ảnh hưởng đến quiz/flashcard (số lượng hạn chế trong 48h), không phải RAG chat (frequency cao nhưng mỗi call rất rẻ với Haiku).
+---
 
-**Trade-off 3: Semantic Chunking vs Fixed-size Chunking cho Knowledge Base**
+### **Trade-off 2: Chiến lược chọn Model theo tác vụ (Haiku & Sonnet)**
 
-Chúng tôi chọn **SEMANTIC chunking** (max 300 tokens, breakpoint percentile 95%) thay vì fixed-size (ví dụ 512 tokens/page) vì medical textbooks có cấu trúc đoạn văn ngữ nghĩa hoàn chỉnh — cắt giữa đoạn sẽ làm mất context. Semantic chunking giữ nguyên semantic boundaries, cải thiện retrieval quality cho RAG. Trade-off: semantic chunking chậm hơn và tốn nhiều tokens hơn khi embedding vì chunks không đều nhau.
+Thay vì dùng một model duy nhất cho mọi tính năng, bọn em triển khai **chiến lược Per-agent Model** để tối ưu hóa giữa hiệu năng và chi phí:
 
+* **Claude 3 Haiku cho RAG Chat:** Nhiệm vụ này chỉ cần trả lời ngắn gọn dựa trên dữ liệu truy xuất. Haiku đáp ứng rất tốt với tốc độ cực nhanh và chi phí rẻ hơn tới 15 lần so với Sonnet.
+* **Claude 3.5 Sonnet cho Quiz/Flashcard:** Việc tạo câu hỏi trắc nghiệm đòi hỏi cấu hình đầu ra (Structured Output) cực kỳ chính xác (4 lựa chọn, đáp án đúng, giải thích). Sonnet vượt trội hoàn toàn ở khả năng này, giúp tránh lỗi format so với Haiku.
+* **Hiệu quả:** Cách tiếp cận này giúp bọn em kiểm soát chi phí hiệu quả vì các tác vụ "nặng" như Quiz chỉ chiếm số lượng ít, trong khi RAG Chat có tần suất cao lại được xử lý rất tiết kiệm.
+
+---
+
+### **Trade-off 3: Semantic Chunking vs Fixed-size Chunking**
+
+Đối với Knowledge Base, bọn em ưu tiên sử dụng **Semantic Chunking** (max 300 tokens, breakpoint percentile 95%) thay vì chia nhỏ văn bản theo kích thước cố định (Fixed-size).
+
+* **Lý do:** Các tài liệu y khoa thường có cấu trúc đoạn văn mang tính logic chặt chẽ. Nếu cắt theo số ký tự cứng nhắc, ngữ cảnh sẽ bị gãy vụn, dẫn đến kết quả truy xuất (Retrieval) kém chính xác. Semantic chunking giúp bọn em giữ trọn vẹn ý nghĩa của từng phân đoạn.
+* **Đánh đổi:** Phương pháp này xử lý chậm hơn và tốn nhiều token embedding hơn do kích thước chunk không đều, nhưng đây là sự đánh đổi xứng đáng để đổi lấy chất lượng câu trả lời chuyên sâu cho người dùng.
 ---
 
 ## 4. Cost Discipline
