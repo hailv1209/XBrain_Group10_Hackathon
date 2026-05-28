@@ -449,29 +449,26 @@ Action: SNS → email đến team
 
 ### 6.3 Log Insights Query
 
-> **CẦN TẠO VÀ LƯU (Day 2):** Lưu một Log Insights query. Chụp ảnh → `docs/evidence/log_insights_query.png`
 
-**Ví dụ query (VPC Flow Logs):**
+**Ví dụ query (CloudTrail Logs – Audit AWS Activities):**
 
 ```
-fields @timestamp, srcaddr, dstaddr, action, protocol
-| filter action = 'REJECT'
+fields @timestamp,
+       eventName,
+       sourceIPAddress,
+       awsRegion,
+       eventSource,
+       userIdentity.userName
+| filter eventName not like /Describe/
+| filter eventName not like /Get/
+| filter eventName not like /List/
 | sort @timestamp desc
 | limit 20
 ```
 
-**Ví dụ query (ECS logs):**
+<img width="1920" height="891" alt="image" src="https://github.com/user-attachments/assets/a8f4b3c8-18f5-493a-b911-e2461054bbb1" />
+> **📸 Screenshot 6.3:** Ảnh kết quả thực hiện query.
 
-```
-fields @timestamp, @message
-| filter @message like /ERROR/
-| sort @timestamp desc
-| limit 20
-```
-
-> **📸 Screenshot 6.3:** Chèn ảnh saved Log Insights query với kết quả thực tại đây.
->
-> File: `docs/evidence/log_insights_query.png`
 
 ---
 
