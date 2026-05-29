@@ -67,7 +67,7 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 | 1a | Static UI Hosting | CloudFront + S3 | HTTPS trên custom domain `aws.hungtran.id.vn` qua CloudFront. S3 là origin. Block Public Access bật. Không cần ACM riêng vì dùng HTTPS của CloudFront. |
 | 1b | API Entry | ALB (Application Load Balancer) | ALB nhận traffic từ CloudFront prefix list và forward đến ECS Fargate tasks qua port 8000. Stateful app (FastAPI + SQLAlchemy) cần connection persistence — ALB hỗ trợ tốt hơn Lambda Function URL. |
 | 2 | Application Compute | ECS Fargate | FastAPI backend chạy trên Fargate thay vì EC2 vì: không cần quản lý instance, tự động scale theo request, tính phí theo vCPU-Giây sử dụng (phù hợp cho hackathon 48h). ECS IAM Task Role cho phép gán quyền scoped. |
-| 3 | AI/ML Feature | Bedrock Agents + Knowledge Base + Guardrail | 3 Agents riêng cho 3 chức năng (chat RAG, quiz, flashcard) mỗi agent gắn Knowledge Base. Chat RAG dùng **Claude Haiku** (au.anthropic.claude-haiku-4-5) cho Q&A ngắn gọn, tiết kiệm chi phí. Quiz và Flashcard Generator dùng **Claude Sonnet 4** (global.anthropic.claude-sonnet-4-6) cho structured generation đúng format. Guardrail bảo vệ nội dung phù hợp cho môi trường giáo dục y khoa. |
+| 3 | AI/ML Feature | Bedrock Agents + Knowledge Base + Guardrail | 3 Agents riêng cho 3 chức năng (chat RAG, quiz, flashcard) mỗi agent gắn Knowledge Base. Chat RAG dùng **Nova Lite** (amazon.nova-lite-v1:0) cho Q&A ngắn gọn, chi phí thấp nhất trong Bedrock family. Quiz và Flashcard Generator dùng **Claude Haiku 4.5** (au.anthropic.claude-haiku-4-5) cho structured generation (MCQ format, flashcard pairs) — Haiku đủ năng lực cho structured extraction từ retrieved chunks với chi phí rẻ hơn Sonnet. Guardrail bảo vệ nội dung phù hợp cho môi trường giáo dục y khoa. |
 | 4 | Data Persistence | RDS PostgreSQL db.t3.micro (single-AZ) | Data model MedEdu là quan hệ (users → books → contents → quizzes → flashcards). SQLAlchemy ORM đã xây dựng sẵn. Single-AZ vì Multi-AZ gấp đôi chi phí, không có giá trị demo. |
 | 5 | Object Storage | S3 Standard (3 buckets) | Frontend bucket, data-source bucket (KB), supplemental bucket. Tất cả bật Block Public Access và SSE-S3 encryption. OwnershipControls: BucketOwnerEnforced. |
 | 6 | Network Foundation | VPC 3-tier (public + private DB) + NAT GW + SG references | Public subnets cho ALB + ECS + NAT GW. Private subnets (2 AZ) cho RDS . SG của RDS chỉ accept TCP 5432 từ ECS SG (không phải 0.0.0.0/0). VPC Flow Logs gửi logs đến CloudWatch. |
@@ -85,13 +85,13 @@ Bọn em quyết định chọn **ECS Fargate** thay vì EC2 truyền thống v�
 
 ---
 
-### **Trade-off 2: Chiến lược chọn Model theo tác vụ (Haiku & Sonnet)**
+### **Trade-off 2: Chiến lược chọn Model theo tác vụ (Nova Lite & Haiku)**
 
 Thay vì dùng một model duy nhất cho mọi tính năng, bọn em triển khai **chiến lược Per-agent Model** để tối ưu hóa giữa hiệu năng và chi phí:
 
-* **Claude 4.5 Haiku cho RAG Chat:** Nhiệm vụ này chỉ cần trả lời ngắn gọn dựa trên dữ liệu truy xuất. Haiku đáp ứng rất tốt với tốc độ cực nhanh và chi phí rẻ hơn tới 15 lần so với Sonnet.
-* **Claude 4.6 Sonnet cho Quiz/Flashcard:** Việc tạo câu hỏi trắc nghiệm đòi hỏi cấu hình đầu ra (Structured Output) cực kỳ chính xác (4 lựa chọn, đáp án đúng, giải thích). Sonnet vượt trội hoàn toàn ở khả năng này, giúp tránh lỗi format so với Haiku.
-* **Hiệu quả:** Cách tiếp cận này giúp bọn em kiểm soát chi phí hiệu quả vì các tác vụ "nặng" như Quiz chỉ chiếm số lượng ít, trong khi RAG Chat có tần suất cao lại được xử lý rất tiết kiệm.
+* **Nova Lite cho RAG Chat:** RAG chat là tác vụ light, chỉ cần trả lời ngắn từ retrieved chunks. Nova Lite có chi phí thấp nhất trong Bedrock family ($0.04/$0.16 per 1M tokens) — rẻ hơn Haiku 25x ở input. Đủ năng lực cho single-turn Q&A đơn giản.
+* **Claude 4.5 Haiku cho Quiz/Flashcard:** Tạo MCQ (4 lựa chọn, đáp án đúng, giải thích) và flashcard pairs (front/back) là structured extraction — Haiku đủ để parse retrieved chunks và output đúng JSON format. Tiết kiệm hơn nhiều so với Sonnet mà vẫn đảm bảo quality.
+* **Hiệu quả:** Nova Lite cho chat + Haiku cho quiz/flashcard tối ưu chi phí tối đa mà vẫn đáp ứng yêu cầu structured generation cho medical study tool.
 
 ---
 
@@ -517,64 +517,64 @@ fields @timestamp,
 
 ### DECISION BLOCK 1: Foundation Model — Per-Agent Model Selection (Claude Family)
 
-**DECISION:** Sử dụng **3 foundation models riêng cho từng Bedrock Agent** dựa trên đặc thù workload của mỗi task:
+**DECISION:** Sử dụng **2 foundation models cho 3 Bedrock Agents**:
 
 | Agent | Model | Inference Profile | Lý do chọn |
 |-------|-------|-------------------|-------------|
-| Chat RAG | `au.anthropic.claude-haiku-4-5-20251001-v1:0` | ap-southeast-2 | RAG chat là tác vụ light — Haiku đủ nhanh, rẻ, và phù hợp cho single-turn Q&A ngắn gọn. AP Southeast inference profile giảm cross-region latency. |
-| Quiz Generator | `global.anthropic.claude-sonnet-4-6` | global | Tạo quiz cần reasoning mạnh — Sonnet 4 vượt trội ở structured generation với 4 lựa chọn chính xác, giải thích súc tích. Global profile đảm bảo routing đến region có capacity tốt nhất. |
-| Flashcard Generator | `global.anthropic.claude-sonnet-4-6` | global | Tương tự quiz — flashcard generation cần hiểu context để tách front/back hoàn chỉnh. Sonnet 4 xử lý tốt hơn với multi-paragraph chunks từ KB. |
+| Chat RAG | `amazon.nova-lite-v1:0` | ap-southeast-2 | RAG chat là tác vụ light — Nova Lite có chi phí thấp nhất Bedrock family ($0.04/$0.16 per 1M tokens), phù hợp cho single-turn Q&A đơn giản. |
+| Quiz Generator | `au.anthropic.claude-haiku-4-5-20251001-v1:0` | ap-southeast-2 | Quiz generation là structured extraction từ retrieved chunks — Haiku đủ năng lực để output JSON đúng format (4 lựa chọn, đáp án, giải thích) với chi phí hợp lý. |
+| Flashcard Generator | `au.anthropic.claude-haiku-4-5-20251001-v1:0` | ap-southeast-2 | Tương tự quiz — flashcard generation (front/back pairs) là structured extraction, Haiku đủ để parse chunks và tách concept ra JSON. |
 
 **ALTERNATIVES CONSIDERED:**
 
-- **Nova Lite cho tất cả 3 agents** — loại trừ vì: Nova Lite không mạnh bằng Claude family cho structured generation tasks. Quiz generation (4 lựa chọn, đúng/sai, giải thích) và flashcard generation (front/back separation) đòi hỏi reasoning mà Nova Lite không đảm bảo. Dùng Haiku cho chat + Sonnet cho quiz/flashcard là tối ưu hơn việc dùng 1 model cho cả 3.
+- **Claude Sonnet 4 cho quiz/flashcard** — loại trừ vì: $3.00/$15.00 per 1M tokens (75x input cost vs Nova Lite). Structured extraction từ retrieved chunks không cần reasoning cấp cao — Haiku đủ cho use case này. Sonnet chỉ hợp lý nếu quiz quality thực sự vượt trội, nhưng team không đo lường được sự khác biệt đáng kể trên MCQ format.
 
-- **Claude 3.5 Sonnet cho tất cả 3 agents** — loại trừ vì: Sonnet có giá $3.00/$15.00 per 1M tokens (vs Haiku $1.00/$5.00). RAG chat chỉ cần trả lời ngắn 1-2 câu — Haiku đủ cho use case này. Dùng Sonnet cho chat là overkill, lãng phí chi phí.
+- **Claude Haiku cho tất cả 3 agents** — loại trừ vì: Haiku $1.00/$5.00 per 1M tokens (25x input cost vs Nova Lite). RAG chat chỉ cần trả lời ngắn 1-2 câu — Nova Lite đủ với chi phí rẻ hơn nhiều.
 
-- **Claude 3.5 Opus cho tất cả 3 agents** — loại trừ vì: $15.00/$75.00 per 1M tokens. Không bao giờ được biện minh cho quiz/flashcard generation — structured extraction không cần reasoning cấp cao.
+- **Claude 3.5 Opus cho tất cả 3 agents** — loại trừ vì: $15.00/$75.00 per 1M tokens. Extreme overkill cho structured generation tasks.
 
-- **Llama 3.1 via Bedrock cho tất cả 3 agents** — loại trừ vì: mặc dù token cost thấp hơn, Claude family vượt trội rõ rệt trên structured generation (JSON output đúng format, câu hỏi có 4 lựa chọn chính xác). Llama 3.1 70B qua inference profile không có native Bedrock KB integration.
+- **Llama 3.1 via Bedrock cho tất cả 3 agents** — loại trừ vì: mặc dù token cost thấp hơn, Claude family vượt trội rõ rệt trên structured generation. Llama 3.1 70B qua inference profile không có native Bedrock KB integration.
 
 **MEASUREMENT:**
 
-- **Chat RAG (Haiku)**: $1.00 input / $5.00 output per 1M tokens (ap-southeast-2 inference)
+- **Chat RAG (Nova Lite)**: $0.04 input / $0.16 output per 1M tokens (ap-southeast-2)
   - Ước tính 200 chat sessions × avg 1K input + 200 output tokens = 200K in + 40K out
-  - Cost: **$0.20** + **$0.20** = **$0.40** cho 48h
+  - Cost: **$0.008** + **$0.006** = **~$0.014** cho 48h
 
-- **Quiz Generator (Sonnet 4)**: $3.00 input / $15.00 output per 1M tokens (global inference)
+- **Quiz Generator (Haiku)**: $1.00 input / $5.00 output per 1M tokens (ap-southeast-2)
   - Ước tính 50 quiz generations × avg 5K input + 2K output tokens = 250K in + 100K out
-  - Cost: **$0.75** + **$1.50** = **$2.25** cho 48h
+  - Cost: **$0.25** + **$0.50** = **$0.75** cho 48h
 
-- **Flashcard Generator (Sonnet 4)**: $3.00 input / $15.00 output per 1M tokens (global inference)
+- **Flashcard Generator (Haiku)**: $1.00 input / $5.00 output per 1M tokens (ap-southeast-2)
   - Ước tính 50 flashcard generations × avg 5K input + 2K output tokens = 250K in + 100K out
-  - Cost: **$0.75** + **$1.50** = **$2.25** cho 48h
+  - Cost: **$0.25** + **$0.50** = **$0.75** cho 48h
 
-- **Tổng Bedrock cost 48h**: Haiku $0.40 + Sonnet Quiz $2.25 + Sonnet Flashcard $2.25 = **$4.90**
+- **Tổng model inference cost 48h**: Nova Lite ~$0.01 + Haiku Quiz $0.75 + Haiku Flashcard $0.75 = **~$1.51**
 
-- **So sánh vs Nova Lite cho tất cả 3 agents**: Nova Lite $0.04/$0.16 × 700K in + 240K out = **~$0.09** — rẻ hơn nhưng quality không đảm bảo cho quiz/flashcard structured generation.
+- **So sánh vs all-Sonnet**: Sonnet Quiz $2.25 + Sonnet Flashcard $2.25 = **$4.50** → savings = **~$3.00/call batch** khi dùng Haiku thay Sonnet.
 
 **EVIDENCE:**
 
-<img width="1191" height="597" alt="image" src="https://github.com/user-attachments/assets/ba516e2d-f3ab-4a51-b748-b88f22d26104" />
+<img width="1174" height="570" alt="image" src="https://github.com/user-attachments/assets/9c90ee3a-3e9b-47b1-ba40-1e4746b2adb4" />
 
-> **📸 Screenshot E1-a:** `webapp-group10-mededu-chat-with-rag` hiển thị model `au.anthropic.claude-haiku-4-5`.
-
-
-<img width="1160" height="570" alt="image" src="https://github.com/user-attachments/assets/ac51ca64-de93-4238-8af4-587106c39f6c" />
-
-> **📸 Screenshot E1-b:**  `webapp-group10-mededu-generating-quizz` hiển thị model `global.anthropic.claude-sonnet-4-6`.
+> **📸 Screenshot E1-a:** `webapp-group10-mededu-chat-with-rag` hiển thị model `amazon.nova-lite-v1:0`.
 
 
-<img width="1176" height="564" alt="image" src="https://github.com/user-attachments/assets/f1abcbbb-96d0-4db6-9778-c79efec852b5" />
+<img width="1167" height="564" alt="image" src="https://github.com/user-attachments/assets/e2234f02-cfce-4176-a003-ff987e9473c1" />
 
-> **📸 Screenshot E1-c:** `webapp-group10-mededu-generating-flashcard` hiển thị model `global.anthropic.claude-sonnet-4-6`.
+> **📸 Screenshot E1-b:** `webapp-group10-mededu-generating-quizz` hiển thị model `au.anthropic.claude-haiku-4-5`.
+
+
+<img width="1178" height="588" alt="image" src="https://github.com/user-attachments/assets/3a341eb8-24e3-4ee3-a92d-aeeb6b0d9435" />
+
+> **📸 Screenshot E1-c:** `webapp-group10-mededu-generating-flashcard` hiển thị model `au.anthropic.claude-haiku-4-5`.
 
 
 **TRADE-OFF ACCEPTED:**
 
-- **Haiku cho RAG chat** — từ bỏ khả năng xử lý multi-turn conversation phức tạp của Sonnet, nhưng RAG chat trong MedEdu là single-turn Q&A (hỏi đáp ngắn về nội dung tài liệu). Haiku đủ cho use case này với chi phí thấp hơn 15x.
-- **Sonnet cho quiz/flashcard** — chấp nhận chi phí cao hơn vì quality của structured output (đúng 4 lựa chọn, đáp án chính xác, giải thích ngắn gọn) là yêu cầu bắt buộc cho medical study tool. Không thể dùng model rẻ hơn nếu quiz toàn sai đáp án.
-- **Per-agent model strategy** — phức tạp hơn việc dùng 1 model, nhưng tối ưu cost/quality cho từng task. RAG chat chỉ cần Haiku, quiz/flashcard cần Sonnet.
+- **Nova Lite cho RAG chat** — từ bỏ multi-turn conversation complexity của Claude, nhưng RAG chat là single-turn Q&A (hỏi đáp ngắn về nội dung tài liệu). Nova Lite đủ với chi phí thấp nhất trong Bedrock family.
+- **Haiku cho quiz/flashcard** — chấp nhận Haiku thay Sonnet để tiết kiệm 3x cost. Structured extraction (4 lựa chọn, đáp án, flashcard pairs) là extraction từ retrieved chunks, không cần deep reasoning — Haiku đủ cho use case này.
+- **Per-agent model strategy** — Nova Lite cho chat + Haiku cho quiz/flashcard tối ưu cost/quality cho từng task.
 ---
 
 ### DECISION BLOCK 2: Chunking Strategy — Semantic vs Fixed-size cho Knowledge Base
@@ -627,8 +627,8 @@ fields @timestamp,
 **1. CloudFormation-as-code từ day 0.**
 Template YAML định nghĩa toàn bộ infra (VPC, RDS, ECS, Bedrock Agents, S3 buckets, IAM roles, Security Groups, Guardrail) trong 1 file. Khi cần tái deploy hoặc team member vô tình xóa resources, chỉ cần chạy `aws cloudformation deploy` — toàn bộ stack tái tạo trong vài phút. Đặc biệt quan trọng khi 10 thành viên làm việc song song trên các phần khác nhau.
 
-**2. Per-agent model selection (Haiku cho chat RAG, Sonnet 4 cho quiz/flashcard).**
-Thay vì dùng 1 model duy nhất, team chọn model phù hợp với workload. RAG chat chỉ cần trả lời ngắn từ retrieved chunks — Haiku đủ với chi phí thấp hơn 15x. Quiz và flashcard cần structured output chính xác — Sonnet 4 vượt trội ở đây.
+**2. Per-agent model selection (Nova Lite cho chat RAG, Haiku cho quiz/flashcard).**
+Thay vì dùng 1 model duy nhất, team chọn model phù hợp với workload. RAG chat chỉ cần trả lời ngắn từ retrieved chunks — Nova Lite đủ với chi phí thấp nhất trong Bedrock family ($0.04/$0.16). Quiz và flashcard là structured extraction — Haiku đủ để output JSON đúng format mà rẻ hơn Sonnet 3x.
 
 **3. Security Groups least-privilege từ thiết kế.**
 RDS chỉ accept TCP 5432 từ ECS SG, ALB chỉ accept từ CloudFront prefix list. Đúng từ đầu, tránh retrofit security sau — vốn tốn công và dễ miss edge cases.
