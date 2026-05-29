@@ -329,14 +329,14 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 }
 ```
 
-Từ CloudFormation template, các IAM roles quan trọng:
+Các IAM roles quan trọng:
 
 | Role Name | Purpose | Scoped Actions |
 |-----------|---------|---------------|
 | `AmazonBedrockExecutionRoleForKnowledgeBase` | KB ingestion + S3 Vectors access | S3 (3 buckets), Bedrock invoke Titan, BDA, S3 Vectors (GetIndex, QueryVectors, PutVectors, DeleteVectors) |
 | `AmazonBedrockExecutionRoleForAgents_AXKQXIRED1G` | Chat RAG Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
-| `AmazonBedrockExecutionRoleForAgents_DDB8T2J26LB` | Quiz Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
-| `AmazonBedrockExecutionRoleForAgents_G7WDZSSAM3M` | Flashcard Agent | Nova Lite invoke, ApplyGuardrail, KB retrieve |
+| `AmazonBedrockExecutionRoleForAgents_DDB8T2J26LB` | Quiz Agent | Claude Haiku invoke, ApplyGuardrail, KB retrieve |
+| `AmazonBedrockExecutionRoleForAgents_G7WDZSSAM3M` | Flashcard Agent | Claude Haiku invoke, ApplyGuardrail, KB retrieve |
 | `VPCFlowLogs-Cloudwatch-1777278638503` | VPC Flow Logs delivery | logs:CreateLogStream, PutLogEvents |
 
 
