@@ -110,11 +110,12 @@ Thay vì dùng một model duy nhất cho mọi tính năng, bọn em triển kh
 <img width="975" height="385" alt="image" src="https://github.com/user-attachments/assets/a0363b0f-362a-4399-a38d-ddeea95f05f5" />
 <img width="975" height="249" alt="image" src="https://github.com/user-attachments/assets/1ec8f7a9-493a-4879-87af-9614882f64fc" />
 
-> **📸 Screenshot 4.1 Day 1 EOD:** 
+> ** Screenshot 4.1 Day 1 EOD:** 
 
 <img width="1584" height="735" alt="image" src="https://github.com/user-attachments/assets/b52d16a3-d0a7-4daf-a3b5-c5ee397a796b" />
 <img width="1250" height="733" alt="image" src="https://github.com/user-attachments/assets/9d82d27c-4f13-4c20-8a7f-1accd0bc94e5" />
 
+> ** Screenshot 4.2 Day 2 EOD:** 
 
 ---
 
