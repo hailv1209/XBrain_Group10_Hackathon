@@ -55,7 +55,7 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 
 ### 3.1 Sơ đồ kiến trúc
 
-<img width="1362" height="766" alt="image" src="https://github.com/user-attachments/assets/c2f49573-9a9c-4368-8956-8bbbb8690afd" />
+<img width="2792" height="1841" alt="Architect_Hackathon_G10 drawio" src="https://github.com/user-attachments/assets/5c4ddf8a-4be0-4862-b362-24fbcc8a1460" />
 
 
 > **Link to diagram: ** [https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D](https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D)
