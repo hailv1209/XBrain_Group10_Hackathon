@@ -112,65 +112,96 @@ Thay vì dùng một model duy nhất cho mọi tính năng, bọn em triển kh
 
 > **📸 Screenshot 4.1 Day 1 EOD:** 
 
-**Cách chụp Cost Explorer:**
-1. AWS Console → Cost Explorer
-2. Filter: `Tag: Team=G10`
-3. Group by: Service
-4. Date range: Last 7 days (hoặc custom từ ngày bắt đầu)
-5. Chụp ảnh toàn màn hình
+<img width="1584" height="735" alt="image" src="https://github.com/user-attachments/assets/b52d16a3-d0a7-4daf-a3b5-c5ee397a796b" />
+<img width="1250" height="733" alt="image" src="https://github.com/user-attachments/assets/9d82d27c-4f13-4c20-8a7f-1accd0bc94e5" />
+
 
 ---
 
-### 4.2 Cost Breakdown (Ước tính — thay bằng dữ liệu thực tế sau khi deploy)
+### 4.2 Cost Breakdown (Actual Cost from AWS Cost Explorer)
 
-Dựa trên kiến trúc CloudFormation và ước tính 48h sử dụng ở `ap-southeast-2`:
+Dựa trên dữ liệu thực tế từ AWS Cost Explorer trong khoảng `2026-05-26 → 2026-05-29` tại account triển khai:
 
-| Service | Cách tính | Chi phí ước tính |
-|---------|-----------|-----------------|
-| ECS Fargate (vCPU 0.25, GB 0.5, 48h) | $0.04048/vCPU-giây × 0.25 × 3600 × 48 | ~$0.44 |
-| ALB (hourly + LCU) | $0.0225/hr × 48 + LCU | ~$1.10 |
-| NAT Gateway (2 × 48h) | $0.059/hr × 2 × 48h | ~$5.66 |
-| RDS db.t3.micro single-AZ | $0.026/hr × 48h | $1.25 |
-| RDS gp2 storage (20GB) | $0.138/GB-mo × 20 × (48/720) | $0.18 |
-| Neptune db.t3.micro | $0.026/hr × 48h | $1.25 |
-| S3 (3 buckets, storage + requests) | ~$0.02 | $0.02 |
-| CloudFront | 1GB Asia outbound | $0.09 |
-| Bedrock Nova Lite (KB retrieve+generate) | ~500K in + 50K out × pricing | ~$0.40 |
-| Bedrock Titan Embeddings v2 (ingestion) | 1M tokens × $0.02/M | $0.02 |
-| S3 Vectors (KB vector store) | ~$0.01 | $0.01 |
-| KMS CMK (1 key) | prorated 48h | $0.07 |
-| CloudTrail (multi-region, 48h) | ~$0.02 | $0.02 |
-| VPC Flow Logs (CloudWatch) | ~$0.05 | $0.05 |
-| **TỔNG ƯỚC TÍNH** | | **~$9.50** |
-| **% của $100 cap** | | **~9.5%** |
+| Service | Actual Cost (USD) | Observation |
+|---------|------------------|-------------|
+| Bedrock | $32.59 | Chi phí lớn nhất do inference và model invocation |
+| EC2-Other | $3.14 | Bao gồm networking và EC2-related overhead |
+| AWS Config | $2.53 | Cost từ configuration recording |
+| Claude Sonnet 4.6 (Bedrock Edition) | $1.44 | Token inference usage |
+| Relational Database Service (RDS) | $1.22 | Database runtime cost |
+| Elastic Container Service (ECS) | $0.89 | Container orchestration runtime |
+| Elastic Load Balancing (ALB) | $0.78 | Application Load Balancer hourly usage |
+| Claude Haiku 4.5 (Bedrock Edition) | $0.67 | Lightweight model inference |
+| VPC | $0.59 | Network-related cost |
+| OpenSearch Service | $0.56 | Search/index cluster runtime |
+| Route 53 | $0.50 | Hosted zone + DNS queries |
+| CloudWatch | $0.24 | Logs and monitoring |
+| S3 | $0.04 | Object storage |
+| Systems Manager | $0.03 | Session/management operations |
+| Cost Explorer | $0.03 | Cost analytics API usage |
+| Others | ~$0.00 | Payment Cryptography, ECR, Location Service, Secrets Manager |
+| **TOTAL ACTUAL COST** | **$45.67** |  |
+| **% of $100 Budget Cap** | **45.67%** | Within allowed budget |
 
-> **⚠️ LƯU Ý:** NAT Gateway là chi phí lớn nhất (~$5.66). Nếu ECS chỉ gọi AWS services (Bedrock, S3, RDS), có thể thay thế NAT Gateway bằng VPC Interface Endpoints để giảm chi phí.
+> **📌 Observation:**  
+> Chi phí thực tế cao hơn nhiều so với estimate ban đầu (~$9.50 → $45.67), chủ yếu do Bedrock inference usage chiếm tỷ trọng lớn.
 
-> **📸 Screenshot 4.2:** Chèn ảnh Cost Explorer breakdown theo service tại đây.
+> **📌 Main Cost Driver:**  
+> AWS Bedrock là nguồn chi phí lớn nhất (~71.4% tổng chi phí), cho thấy workload AI inference/token processing đang dominate hệ thống.
+
+> **📌 Optimization Opportunity:**  
+> Có thể giảm cost bằng cách:
+> - Giảm token output/input
+> - Dùng Claude Haiku thay vì Sonnet cho các tác vụ nhẹ
+> - Áp dụng caching/vector retrieval để giảm số lần invoke model
+> - Scale down Config/OpenSearch nếu không cần realtime monitoring
+
 
 ---
 
 ### 4.3 Written Observation
 
-> **📸 Screenshot 4.3:** Chèn ảnh Cost Explorer cho phần observation tại đây.
+<img width="1250" height="158" alt="image" src="https://github.com/user-attachments/assets/b9904ef0-f89e-41d8-b798-c79d3a8e651b" />
 
-> **CẦN ĐIỀN (sau Day 1):** Viết observation thực tế từ Cost Explorer.
->
-> *Hướng dẫn:*
->
-> **Top 3 chi phí lớn nhất:**
-> 1. [Service A]: $[X] — chiếm [Y]% tổng chi phí
-> 2. [Service B]: $[X] — chiếm [Y]% tổng chi phí
-> 3. [Service C]: $[X] — chiếm [Y]% tổng chi phí
->
-> **Xu hướng chi phí:**
-> - [Ngày/thời điểm]: chi phí tăng/giảm vì [lý do cụ thể]
->
-> **Có nằm trong ngân sách không?**
-> - [Có/Không] — [giải thích]
->
-> **Bonus eligibility (Path H — dưới $30)?**
-> - [Có/Không] — [lý do]
+#### Top 3 Highest Cost Services
+
+1. **Bedrock — $32.59 (~71.4%)**  
+   Chi phí lớn nhất do AI model inference và token processing.
+
+2. **EC2-Other — $3.14 (~6.9%)**  
+   Bao gồm NAT Gateway, networking overhead, data transfer và các VPC infrastructure-related charges.
+
+3. **AWS Config — $2.53 (~5.5%)**  
+   Cost phát sinh từ continuous configuration recording và compliance tracking.
+
+---
+
+#### Cost Trend Observation
+
+- **May 26:** Chi phí thấp (~$0.46), hệ thống gần như idle hoặc mới deploy.
+- **May 27:** Chi phí tăng lên ~$4.47 khi workload inference bắt đầu chạy.
+- **May 28:** Chi phí tăng mạnh lên ~$40.74 do Bedrock model usage spike.
+- **May 29:** Chưa phát sinh thêm chi phí tại thời điểm capture screenshot.
+
+---
+
+#### Budget Compliance
+
+- **Within budget:** YES  
+  Tổng chi phí hiện tại là `$45.67`, vẫn nằm trong giới hạn ngân sách `$100`.
+
+---
+
+#### Bonus Eligibility (Path H — dưới $30)
+
+- **Not eligible currently**  
+  Vì tổng chi phí `$45.67` vượt mức yêu cầu `< $30`.
+
+---
+
+#### Final Technical Insight
+
+Kết quả Cost Explorer cho thấy AI inference workload (AWS Bedrock) là bottleneck chính về cost thay vì infrastructure truyền thống (ECS/RDS/VPC). Điều này phản ánh kiến trúc AI-native thường có compute cost tập trung vào model invocation hơn là container/runtime infrastructure.
 
 ---
 
