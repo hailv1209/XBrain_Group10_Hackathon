@@ -237,7 +237,7 @@ Cost Anomaly Detection monitor đã tạo ở account level. Service miễn phí
 
 ### 5.1 IAM Roles và Execution Role Scope (Mandatory #7)
 
-#### ECS Task Role (Bedrock + S3 + RDS access)
+#### ECS Task Role (Bedrock + S3)
 
 <img width="1565" height="720" alt="image" src="https://github.com/user-attachments/assets/a86b74a3-d744-48a0-9b93-a170b493e520" />
 
