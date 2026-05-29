@@ -58,7 +58,7 @@ MedEdu tương tự trực tiếp với **Quizlet AI** (tạo flashcard tự đ�
 <img width="2792" height="1841" alt="Architect_Hackathon_G10 drawio" src="https://github.com/user-attachments/assets/5c4ddf8a-4be0-4862-b362-24fbcc8a1460" />
 
 
-> **Link to diagram: ** [https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D](https://app.diagrams.net/#G1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf#%7B%22pageId%22%3A%22_wFuGsi9mvh8PrvmbIV1%22%7D)
+> **Link to diagram: ** [https://viewer.diagrams.net/?tags=%7B%7D&lightbox=1&highlight=0000ff&edit=_blank&layers=1&nav=1&title=B%E1%BA%A3n%20sao%20c%E1%BB%A7a%20AWS-2.drawio&page-id=aTyvGL_KTTjEhPqx1fEJ&dark=auto#Uhttps%3A%2F%2Fdrive.google.com%2Fuc%3Fid%3D1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf%26export%3Ddownload](https://viewer.diagrams.net/?tags=%7B%7D&lightbox=1&highlight=0000ff&edit=_blank&layers=1&nav=1&title=B%E1%BA%A3n%20sao%20c%E1%BB%A7a%20AWS-2.drawio&page-id=aTyvGL_KTTjEhPqx1fEJ&dark=auto#Uhttps%3A%2F%2Fdrive.google.com%2Fuc%3Fid%3D1uAov8ZokNK1LBo_zqMDtdrT4d8BFUOMf%26export%3Ddownload)
 
 ### 3.2 Bảng Service Decisions
 
